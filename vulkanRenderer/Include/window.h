@@ -9,9 +9,12 @@
 #define window_h
 
 #include <stdio.h>
+#include "dynamic_vector.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+void get_window_extension_config(dynamic_vector *window_extension_config);
 
 void initialise_window(GLFWwindow **window);
 

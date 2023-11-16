@@ -8,6 +8,10 @@
 #define renderer_h
 
 #include <stdio.h>
+#include "vulkan_instance.h"
+#include "vulkan_device.h"
+
+
 
 
 
