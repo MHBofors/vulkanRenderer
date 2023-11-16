@@ -8,6 +8,8 @@
 
 #include "vulkan_instance.h"
 
+uint32_t get_apple_extensions(dynamic_vector *vulkan_extension_config);
+
 void create_instance(VkInstance *p_instance, dynamic_vector *vulkan_extension_config) {
     VkApplicationInfo app_info = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
