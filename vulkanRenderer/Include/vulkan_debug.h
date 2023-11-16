@@ -12,11 +12,10 @@
 #include <vulkan/vulkan.h>
 #include <string.h>
 
+uint32_t get_debug_extensions(dynamic_vector *vulkan_extension_config);
 
-
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-VkDebugUtilsMessageTypeFlagsEXT message_type, const VkDebugUtilsMessengerCallbackDataEXT* p_callback_data,
-                                              void* p_user_data);
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT message_type, 
+const VkDebugUtilsMessengerCallbackDataEXT* p_callback_data, void* p_user_data);
 
 void destroy_debug_utils_messenger_EXT(VkInstance instance, VkDebugUtilsMessengerEXT debug_messenger, const VkAllocationCallbacks* p_allocator);
 

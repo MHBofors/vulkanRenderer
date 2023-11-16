@@ -6,6 +6,7 @@
 //
 
 #include "vulkan_debug.h"
+#include "dynamic_vector.h"
 
 #ifndef NDEBUG
     const uint32_t enable_validation_layers = 1;
@@ -15,6 +16,10 @@
 
 const uint32_t validation_layer_count = 1;
 const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
+
+uint32_t get_debug_extensions(dynamic_vector *vulkan_extension_config) {
+    vector_add(vulkan_extension_config, &VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+ }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 VkDebugUtilsMessageTypeFlagsEXT message_type, const VkDebugUtilsMessengerCallbackDataEXT* p_callback_data,
