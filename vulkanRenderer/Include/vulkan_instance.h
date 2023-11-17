@@ -13,8 +13,8 @@
 #include "vulkan_utils.h"
 #include "vulkan_debug.h"
 
-uint32_t get_apple_extensions(dynamic_vector *vulkan_extension_config);
+void apple_instance_support(VkInstanceCreateInfo *create_info, dynamic_vector *instance_extension_config);
 
-void create_instance(VkInstance *instance, dynamic_vector *vulkan_extension_config);
+void create_instance(VkInstance *instance, dynamic_vector *instance_extension_config);
 
 #endif /* vulkan_instance_h */

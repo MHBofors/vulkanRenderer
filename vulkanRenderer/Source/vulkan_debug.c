@@ -6,7 +6,7 @@
 //
 
 #include "vulkan_debug.h"
-#include "dynamic_vector.h"
+
 
 #ifndef NDEBUG
     const uint32_t enable_validation_layers = 1;
@@ -17,14 +17,32 @@
 const uint32_t validation_layer_count = 1;
 const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
 
-uint32_t get_debug_extensions(dynamic_vector *vulkan_extension_config) {
-    vector_add(vulkan_extension_config, &VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
- }
+void create_validation_layers(VkInstanceCreateInfo *create_info, VkDebugUtilsMessengerCreateInfoEXT *debug_create_info, dynamic_vector *instance_extension_config) {
+    if(enable_validation_layers) {
+        populate_debug_messenger_create_info(debug_create_info);
+        
+        create_info->enabledLayerCount = validation_layer_count;
+        create_info->ppEnabledLayerNames = validation_layers;
+        create_info->pNext = (VkDebugUtilsMessengerCreateInfoEXT*) debug_create_info;
+        get_debug_extensions(instance_extension_config);
+    } else {
+        create_info->enabledLayerCount = 0;
+        create_info->ppEnabledLayerNames = NULL;
+        create_info->pNext = NULL;
+    }
+}
 
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+void get_debug_extensions(dynamic_vector *vulkan_extension_config) {
+    const uint32_t debug_extension_count = 1;
+    const char *debug_extensions[] = {VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
+    for(size_t i = 0; i < debug_extension_count; i++) {
+        vector_add(vulkan_extension_config, debug_extensions + i);
+    }
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
 VkDebugUtilsMessageTypeFlagsEXT message_type, const VkDebugUtilsMessengerCallbackDataEXT* p_callback_data,
-void* p_user_data)
-{
+void* p_user_data) {
     printf("Validation layer: %s\n", p_callback_data->pMessage);
     return VK_FALSE;
 }
@@ -82,8 +100,7 @@ uint32_t check_validation_layer_support(void)
     return 1;
 }
 
-void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT *debug_messenger)
-{
+void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT *debug_messenger) {
     if(!enable_validation_layers)
     {
         return;

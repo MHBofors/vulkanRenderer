@@ -12,11 +12,13 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
 void get_window_extension_config(dynamic_vector *window_extension_config) {
-    uint32_t available_extension_count = 0;
-    vkEnumerateInstanceExtensionProperties(NULL, &available_extension_count, NULL);
+     uint32_t glfw_extension_count = 0;
     
-    VkExtensionProperties available_extensions[available_extension_count];
-    vkEnumerateInstanceExtensionProperties(NULL, &available_extension_count, available_extensions);
+    const char **glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+    
+    for(int i = 0; i < glfw_extension_count; i++) {
+        vector_add(window_extension_config, glfw_extensions + i);
+    }
 }
 
 void initialise_window(GLFWwindow **window) {

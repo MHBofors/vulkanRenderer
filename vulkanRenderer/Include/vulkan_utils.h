@@ -10,14 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "window.h"
 #include "dynamic_vector.h"
-#include "vulkan_debug.h"
-
-extern const uint32_t validation_layer_count;
-extern const char *validation_layers[];
-
-void create_instance(VkInstance *instance);
 
 uint32_t check_extension_support(const char **p_available, uint32_t available_count, const char **p_required, uint32_t required_count);
 #endif /* vulkan_utils_h */

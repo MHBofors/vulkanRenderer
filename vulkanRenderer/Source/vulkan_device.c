@@ -13,7 +13,7 @@ const char *required_device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 enum queue_family_flag_bits{GRAPHICS_FAMILY_BIT, PRESENT_FAMILY_BIT, QUEUE_FAMILY_FLAG_COUNT};
 
-void select_physical_device(VkInstance instance, VkPhysicalDevice *physical_device) {
+void select_physical_device(VkPhysicalDevice *physical_device, VkInstance instance, VkSurfaceKHR surface) {
     physical_device = VK_NULL_HANDLE;
     
     uint32_t device_count = 0;
@@ -23,8 +23,24 @@ void select_physical_device(VkInstance instance, VkPhysicalDevice *physical_devi
         printf("Failed to find GPU with Vulkan support!\n");
         exit(1);
     }
-    
-    
+
+    VkPhysicalDevice devices[device_count];
+    vkEnumeratePhysicalDevices(instance, &device_count, devices);
+
+    for(int i = 0; i < device_count; i++)
+    {
+        if(check_device_suitability(devices[i], surface))
+        {
+            physical_device = devices[i];
+            break;
+        }
+    }
+
+    if(*physical_device == VK_NULL_HANDLE)
+    {
+        printf("Failed to find suitable GPU");
+        exit(1);
+    }
 }
 
 uint32_t check_device_suitability(VkPhysicalDevice device, VkSurfaceKHR surface) {
