@@ -8,7 +8,15 @@
 
 #include "vulkan_instance.h"
 
-uint32_t get_apple_extensions(dynamic_vector *vulkan_extension_config);
+extern const int enable_validation_layers;
+
+uint32_t get_apple_extensions(dynamic_vector *vulkan_extension_config) {
+    const uint32_t apple_extension_count = 2;
+    const char *apple_extensions[] = {VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, "VK_KHR_get_physical_device_properties2"};
+    for(int i = 0; i < apple_extension_count; i++) {
+        vector_add(vulkan_extension_config, apple_extensions + i);
+    }
+}
 
 void create_instance(VkInstance *p_instance, dynamic_vector *vulkan_extension_config) {
     VkApplicationInfo app_info = {
@@ -31,26 +39,11 @@ void create_instance(VkInstance *p_instance, dynamic_vector *vulkan_extension_co
         vector_add(extensions, glfw_extensions + i);
     }
 
-#ifdef __APPLE__
-    const uint32_t apple_extension_count = 2;
-    const char *apple_extensions[] = {VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, "VK_KHR_get_physical_device_properties2"};
-    for(int i = 0; i < apple_extension_count; i++) {
-        vector_add(extensions, apple_extensions + i);
-    }
-#endif
 
-#ifndef NDEBUG
-    const uint32_t debug_extension_count = 1;
-    const char *debug_extensions[] =  {VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
-    for(int i = 0; i < debug_extension_count; i++) {
-        vector_add(extensions, debug_extensions + i);
-    }
-#endif
     
     VkInstanceCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &app_info,
-        .enabledExtensionCount = vector_count(extensions),
         .ppEnabledExtensionNames = (const char **)vector_get_array(extensions),
         .enabledLayerCount = 0,
         .pNext = NULL
@@ -64,15 +57,17 @@ void create_instance(VkInstance *p_instance, dynamic_vector *vulkan_extension_co
     create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
     
-#ifndef NDEBUG
+    if(enable_validation_layers) {
     VkDebugUtilsMessengerCreateInfoEXT debug_create_info = {0};
-    populate_debug_messenger_create_info(&debug_create_info);
+        populate_debug_messenger_create_info(&debug_create_info);
+        
+        create_info.enabledLayerCount = validation_layer_count;
+        create_info.ppEnabledLayerNames = validation_layers;
+        create_info.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debug_create_info;
+    }
     
-    create_info.enabledLayerCount = validation_layer_count;
-    create_info.ppEnabledLayerNames = validation_layers;
-    create_info.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debug_create_info;
-#endif
-    
+    create_info.enabledExtensionCount = vector_count(extensions);
+
     if(vkCreateInstance(&create_info, NULL, p_instance) != VK_SUCCESS) {
         printf("Failed to create instance");
         exit(1);
