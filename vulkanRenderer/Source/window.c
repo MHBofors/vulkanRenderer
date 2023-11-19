@@ -11,6 +11,14 @@
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
+void create_surface(VkSurfaceKHR *surface, VkInstance instance, GLFWwindow *window) {
+    if (glfwCreateWindowSurface(instance, window, NULL, surface) != VK_SUCCESS) 
+    {
+        printf("Failed to create window surface!");
+        exit(1);
+    }
+}
+
 void get_window_extension_config(dynamic_vector *window_extension_config) {
      uint32_t glfw_extension_count = 0;
     

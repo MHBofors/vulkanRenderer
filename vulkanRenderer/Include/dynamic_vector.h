@@ -10,31 +10,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #define VECTOR_INIT_SIZE 8
 #define WORD_SIZE 8
-
-/*
-#undef TYPE
-#undef TYPED
-
-#define TYPE
-#define TYPED(expression) expression
-
-
-
-typedef struct TYPED(dynamic_vector) TYPED(dynamic_vector);
-
-int TYPED(vector_create)(TYPED(dynamic_vector) *new_vector);
-void TYPED(vector_free)(TYPED(dynamic_vector) *vector);
-
-int TYPED(vector_add)(TYPED(dynamic_vector) *vector, uint32_t index);
-int TYPED(vector_remove)(TYPED(dynamic_vector) *vector, uint32_t index);
-
-int TYPED(vector_set)(TYPED(dynamic_vector) *vector, uint32_t index);
-TYPE *TYPED(vector_get)(TYPED(dynamic_vector) *vector, uint32_t index);
-*/
 
 typedef struct vector dynamic_vector;
 

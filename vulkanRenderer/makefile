@@ -5,7 +5,7 @@ CFLAGS = -std=c17 -O2 -I./$(INC_DIR)
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lm
 OBJS = main.o window.o renderer.o vulkan_device.o vulkan_instance.o vulkan_debug.o vulkan_utils.o dynamic_vector.o
 
-renderer: main.o window.o renderer.o vulkan_device.o vulkan_instance.o vulkan_debug.o vulkan_utils.o dynamic_vector.o
+renderer: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o renderer $(LDFLAGS)
 
 main.o: $(SRC_DIR)/main.c $(INC_DIR)/window.h $(INC_DIR)/renderer.h
@@ -20,7 +20,7 @@ renderer.o: $(SRC_DIR)/renderer.c $(INC_DIR)/renderer.h
 vulkan_device.o: $(SRC_DIR)/vulkan_device.c $(INC_DIR)/vulkan_device.h
 	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
 
-vulkan_instance.o: $(SRC_DIR)/vulkan_instance.c $(INC_DIR)/vulkan_instance.h vulkan_debug.o
+vulkan_instance.o: $(SRC_DIR)/vulkan_instance.c $(INC_DIR)/vulkan_instance.h
 	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
 
 vulkan_debug.o: $(SRC_DIR)/vulkan_debug.c $(INC_DIR)/vulkan_debug.h
