@@ -18,17 +18,21 @@ struct vector {
 
 int vector_alloc(dynamic_vector **vector, size_t size) {
     dynamic_vector *vector_new = malloc(sizeof(dynamic_vector));
-    vector_new->vector_size = VECTOR_INIT_SIZE;
-    vector_new->element_count = 0;
-    vector_new->element_size = size;
-    vector_new->array = malloc(VECTOR_INIT_SIZE * size);
+    if(vector_new == NULL) {
+        return -1;
+    } else {
+        vector_new->vector_size = VECTOR_INIT_SIZE;
+        vector_new->element_count = 0;
+        vector_new->element_size = size;
+        vector_new->array = malloc(VECTOR_INIT_SIZE * size);
     
-    if(vector_new->array != NULL) {
-        *vector = vector_new;
-        return 0;
+        if(vector_new->array != NULL) {
+            *vector = vector_new;
+            return 0;
+        }
+        free(vector_new);
+        return -1;
     }
-    free(vector_new);
-    return -1;
 }
 
 void vector_free(dynamic_vector *vector) {

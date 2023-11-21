@@ -14,14 +14,14 @@
 extern const uint32_t enable_validation_layers;
 
 int main(int argc, const char * argv[]) {
-    printf("hello\n");
     dynamic_vector *instance_config;
     vector_alloc(&instance_config, sizeof(const char *));
     
     GLFWwindow *window;
     VkInstance instance;
-    VkPhysicalDevice device;
     VkDebugUtilsMessengerEXT debug_messenger;
+    VkSurfaceKHR surface;
+    VkPhysicalDevice physical_device;
     
 
     
@@ -35,11 +35,14 @@ int main(int argc, const char * argv[]) {
     create_instance(&instance, instance_config);
     setup_debug_messenger(instance, &debug_messenger);
     vector_free(instance_config);
+    create_surface(&surface, instance, window);
+    select_physical_device(&physical_device, instance, surface);
     
-    
-    if (enable_validation_layers) {
+    if(enable_validation_layers) {
         destroy_debug_utils_messenger_EXT(instance, debug_messenger, NULL);
     }
+
+    vkDestroySurfaceKHR(instance, surface, NULL);
     vkDestroyInstance(instance, NULL);
     terminate_window(window);
     return 0;

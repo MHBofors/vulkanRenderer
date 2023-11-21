@@ -8,13 +8,14 @@
 #include "vulkan_device.h"
 
 
+
 const char required_device_extension_count = 1;
 const char *required_device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 enum queue_family_flag_bits{GRAPHICS_FAMILY_BIT, PRESENT_FAMILY_BIT, QUEUE_FAMILY_FLAG_COUNT};
 
 void select_physical_device(VkPhysicalDevice *physical_device, VkInstance instance, VkSurfaceKHR surface) {
-    physical_device = VK_NULL_HANDLE;
+    *physical_device = VK_NULL_HANDLE;
     
     uint32_t device_count = 0;
     vkEnumeratePhysicalDevices(instance, &device_count, NULL);
@@ -27,18 +28,16 @@ void select_physical_device(VkPhysicalDevice *physical_device, VkInstance instan
     VkPhysicalDevice devices[device_count];
     vkEnumeratePhysicalDevices(instance, &device_count, devices);
 
-    for(int i = 0; i < device_count; i++)
-    {
+    for(int i = 0; i < device_count; i++) {
         if(check_device_suitability(devices[i], surface))
         {
-            physical_device = devices[i];
+            *physical_device = devices[i];
             break;
         }
     }
 
-    if(*physical_device == VK_NULL_HANDLE)
-    {
-        printf("Failed to find suitable GPU");
+    if(*physical_device == VK_NULL_HANDLE) {
+        printf("Failed to find suitable GPU\n");
         exit(1);
     }
 }
@@ -63,9 +62,11 @@ uint32_t check_device_suitability(VkPhysicalDevice device, VkSurfaceKHR surface)
         available_extension_names[i] = available_extensions[i].extensionName;
     }
     
-    uint32_t extension_support = check_extension_support(available_extension_names, available_extension_count, required_device_extensions, required_device_extension_count);
+    if(check_extension_support(available_extension_names, available_extension_count, required_device_extensions, required_device_extension_count)) {
+        return 0;
+    }
     
-    return extension_support;
+    return 1;
 }
 
 queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface) {
@@ -97,6 +98,8 @@ queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR s
     return indices;
 }
 
-uint32_t is_complete(queue_family_indices indices) {
+uint32_t is_complete(VkQueueFlags available, VkQueueFlags required) {
     return indices.flag_bits & ((1 << QUEUE_FAMILY_FLAG_COUNT) - 1);
 }
+
+void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_device, VkSurfaceKHR surface);

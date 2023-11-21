@@ -23,7 +23,7 @@ typedef struct {
     uint32_t present_family;
 } queue_family_indices;
 
-void pick_physical_device(VkPhysicalDevice *physical_device, VkInstance instance);
+void select_physical_device(VkPhysicalDevice *physical_device, VkInstance instance, VkSurfaceKHR surface);
 
 uint32_t check_device_suitability(VkPhysicalDevice device, VkSurfaceKHR surface);
 

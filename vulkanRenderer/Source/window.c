@@ -12,8 +12,7 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
 void create_surface(VkSurfaceKHR *surface, VkInstance instance, GLFWwindow *window) {
-    if (glfwCreateWindowSurface(instance, window, NULL, surface) != VK_SUCCESS) 
-    {
+    if (glfwCreateWindowSurface(instance, window, NULL, surface) != VK_SUCCESS) {
         printf("Failed to create window surface!");
         exit(1);
     }

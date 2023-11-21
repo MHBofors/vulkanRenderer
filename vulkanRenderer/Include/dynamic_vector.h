@@ -18,7 +18,7 @@
 
 typedef struct vector dynamic_vector;
 
-int vector_alloc(dynamic_vector **vector_new, size_t size);
+int vector_alloc(dynamic_vector **vector, size_t size);
 void vector_free(dynamic_vector *vector);
 
 uint32_t vector_count(dynamic_vector *vector);
