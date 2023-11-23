@@ -14,6 +14,8 @@ const char *required_device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 enum queue_family_flag_bits{GRAPHICS_FAMILY_BIT, PRESENT_FAMILY_BIT, QUEUE_FAMILY_FLAG_COUNT};
 
+const VkQueueFlagBits queue_family_bits = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_COMPUTE_BIT;
+
 void select_physical_device(VkPhysicalDevice *physical_device, VkInstance instance, VkSurfaceKHR surface) {
     *physical_device = VK_NULL_HANDLE;
     
@@ -69,6 +71,13 @@ uint32_t check_device_suitability(VkPhysicalDevice device, VkSurfaceKHR surface)
     return 1;
 }
 
+uint32_t optimal_queue_family(VkPhysicalDevice device, VkQueueFlagBits flag) {
+    uint32_t best_candidate = ~0;
+    uint32_t best_fit = ~0;
+
+    
+}
+
 queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface) {
     queue_family_indices indices = {0};
 
@@ -82,6 +91,7 @@ queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR s
         if(queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             indices.graphics_family = i;
             indices.flag_bits |= 1 << GRAPHICS_FAMILY_BIT;
+            queue_families[i]
         }
         
         VkBool32 present_support = VK_FALSE;
@@ -98,7 +108,7 @@ queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR s
     return indices;
 }
 
-uint32_t is_complete(VkQueueFlags available, VkQueueFlags required) {
+uint32_t is_complete(queue_family_indices indices) {
     return indices.flag_bits & ((1 << QUEUE_FAMILY_FLAG_COUNT) - 1);
 }
 

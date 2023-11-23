@@ -18,10 +18,16 @@
 #include "vulkan_utils.h"
 
 typedef struct {
-    uint32_t flag_bits;
     uint32_t graphics_family;
-    uint32_t present_family;
+    uint32_t transfer_family;
+    uint32_t compute_family;
 } queue_family_indices;
+
+typedef struct {
+    VkQueue graphics_queue;
+    VkQueue transfer_queue;
+    VkQueue compute_queue;
+} device_queues;
 
 void select_physical_device(VkPhysicalDevice *physical_device, VkInstance instance, VkSurfaceKHR surface);
 

@@ -7,6 +7,7 @@
 
 
 #include <stdlib.h>
+#include <stdint.h>
 
 typedef struct tree_node {
     struct tree_node *left;
