@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "vulkan_instance.h"
 #include "vulkan_device.h"
+#include "vulkan_swap_chain.h"
 
 
 

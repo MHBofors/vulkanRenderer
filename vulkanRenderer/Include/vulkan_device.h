@@ -33,7 +33,10 @@ void select_physical_device(VkPhysicalDevice *physical_device, VkInstance instan
 
 uint32_t check_device_suitability(VkPhysicalDevice device, VkSurfaceKHR surface);
 
-queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface);
+uint32_t optimal_queue_family(VkPhysicalDevice device, VkQueueFlagBits flag);
+
+queue_family_indices find_queue_families(VkPhysicalDevice device);
 
 uint32_t is_complete(queue_family_indices indices);
 
+void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, device_queues *queues, dynamic_vector *device_extension_config);

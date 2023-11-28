@@ -31,7 +31,11 @@ void node_free(tree_node *node) {
 int node_add(tree_node **node, uint32_t value) {
     tree_node *root = *node;
     if(root == NULL) {
-        return node_alloc(&root, value);
+        if(node_alloc(&root, value) != -1) {
+            return 1;
+        } else {
+            return 0;
+        }
     } else if(value < root->value) {
         return node_add(&root->left, value);
     } else if(root->value < value) {
@@ -54,14 +58,13 @@ int tree_alloc(binary_tree **tree) {
 }
 void tree_free(binary_tree *tree) {
     node_free(tree->root);
+    free(tree);
 }
 
 int tree_add(binary_tree *tree, uint32_t value) {
-    if(node_add(&tree->root, value) != -1) {
-        tree->size++;
-        return 0;
-    } else {
-        return -1;
-    }
+    int val_added = (&tree->root, value);
+    tree->size += val_added;
+    return val_added;
 }
+
 tree_node *tree_search(binary_tree *tree, uint32_t value);

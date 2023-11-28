@@ -11,6 +11,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "dynamic_vector.h"
+#include "tree.h"
 
 uint32_t check_extension_support(const char **p_available, uint32_t available_count, const char **p_required, uint32_t required_count);
+
+uint32_t hamming_weight(uint32_t n);
+
+void binary_string(char string[32], uint32_t n);
 #endif /* vulkan_utils_h */

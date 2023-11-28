@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "vulkan_utils.h": "c"
+        "vulkan_utils.h": "c",
+        "dynamic_vector.h": "c"
     }
 }

@@ -5,6 +5,8 @@
 //  Created by Markus Höglin on 2023-11-21.
 //
 
+#ifndef tree_h
+#define tree_h
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -30,3 +32,5 @@ void tree_free(binary_tree *tree);
 
 int tree_add(binary_tree *tree, uint32_t value);
 tree_node *tree_search(binary_tree *tree, uint32_t value);
+
+#endif

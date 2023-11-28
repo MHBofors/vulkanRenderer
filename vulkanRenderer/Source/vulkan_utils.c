@@ -9,6 +9,20 @@
 #include "vulkan_debug.h"
 
 
+
+/*
+    01010101010101010101010101010101
+    00110011001100110011001100110011
+    00001111000011110000111100001111
+    00000000111111110000000011111111
+    00000000000000001111111111111111
+*/
+const uint32_t m1 = 0x55555555;
+const uint32_t m2 = 0x33333333;
+const uint32_t m4 = 0x0F0F0F0F;
+const uint32_t m8 = 0x00FF00FF;
+const uint32_t m16 = 0x0000FFFF;
+
 uint32_t check_extension_support(const char **p_available, uint32_t available_count, const char **p_required, uint32_t required_count) {
     uint32_t unsupported_extension_count = 0;
     
@@ -37,3 +51,17 @@ uint32_t check_extension_support(const char **p_available, uint32_t available_co
     return unsupported_extension_count;
 }
 
+uint32_t hamming_weight(uint32_t n) {
+    n = (n & m1) + ((n >> 1) & m1);
+    n = (n & m2) + ((n >> 2) & m2);
+    n = (n & m4) + ((n >> 4) & m4);
+    n = (n & m8) + ((n >> 8) & m8);
+    n = (n & m16) + ((n >> 16) & m16);
+    return n;
+}
+
+void binary_string(char string[32], uint32_t n) {
+    for(uint32_t i = 0; i < 32; i++) {
+        string[i] = (1 << (31 - i)) & n ? '1' : '0';
+    }
+}
