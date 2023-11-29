@@ -21,6 +21,7 @@ static inline void node_free(tree_node *node);
 static inline int node_add(tree_node *node, uint32_t value);
 
 uint32_t node_get_value(tree_node *node);
+uint32_t node_get_depth(tree_node *node);
 tree_node *node_search(tree_node *node, uint32_t value);
 
 static inline void node_ordered_print(tree_node *node);
@@ -33,6 +34,7 @@ void tree_free(binary_tree *tree);
 int tree_add(binary_tree *tree, uint32_t value);
 
 uint32_t tree_get_size(binary_tree *tree);
+uint32_t tree_get_depth(binary_tree *tree);
 tree_node *tree_search(binary_tree *tree, uint32_t value);
 
 void tree_ordered_print(binary_tree *tree);

@@ -63,12 +63,22 @@ static inline int node_add(tree_node *node, uint32_t value) {
 
 
 
-tree_node *node_search(tree_node *node, uint32_t value) {
-    return node;
-}
-
 uint32_t node_get_value(tree_node *node) {
     return node->value;
+}
+
+uint32_t node_get_depth(tree_node *node) {
+    if(node == NULL) {
+        return 0;
+    } else {
+        uint32_t left_depth = node_get_depth(node->left);
+        uint32_t right_depth = node_get_depth(node->right);
+        return (left_depth < right_depth) ? (right_depth + 1) : (left_depth + 1);
+    }
+}
+
+tree_node *node_search(tree_node *node, uint32_t value) {
+    return node;
 }
 
 
@@ -150,6 +160,14 @@ int tree_add(binary_tree *tree, uint32_t value) {
 
 tree_node *tree_search(binary_tree *tree, uint32_t value) {
     return tree->root;
+}
+
+uint32_t tree_get_depth(binary_tree *tree) {
+    if(tree->root != NULL) {
+        return node_get_depth(tree->root);
+    } else {
+        return 0;
+    }
 }
 
 uint32_t tree_get_size(binary_tree *tree) {
