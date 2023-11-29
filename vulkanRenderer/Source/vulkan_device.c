@@ -30,9 +30,12 @@ void select_physical_device(VkPhysicalDevice *physical_device, VkInstance instan
     VkPhysicalDevice devices[device_count];
     vkEnumeratePhysicalDevices(instance, &device_count, devices);
 
+    for(uint32_t i = 0; i < device_count; i++) {
+        printf("%s", devices[i]);
+    }
+
     for(int i = 0; i < device_count; i++) {
-        if(check_device_suitability(devices[i], surface))
-        {
+        if(check_device_suitability(devices[i], surface)) {
             *physical_device = devices[i];
             break;
         }
@@ -140,7 +143,7 @@ void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_d
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
             .queueFamilyIndex = unique_indices[i],
             .queueCount = 1,
-            .pQueuePriorities = &queue_priority,
+            .pQueuePriorities = &queue_priority
         };
         queue_create_infos[i] = queue_create_info;
     }

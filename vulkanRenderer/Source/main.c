@@ -13,9 +13,13 @@
 
 extern const uint32_t enable_validation_layers;
 
-const char device_extension_count = 2;
-const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset"};
-
+#ifdef __APPLE__
+    const char device_extension_count = 2;
+    const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset"};
+#else
+    const char device_extension_count = 1;
+    const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+#endif
 
 int main(int argc, const char * argv[]) {
     dynamic_vector *instance_config;

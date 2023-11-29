@@ -56,6 +56,7 @@ int tree_alloc(binary_tree **tree) {
         return 0;
     }
 }
+
 void tree_free(binary_tree *tree) {
     node_free(tree->root);
     free(tree);
