@@ -14,13 +14,13 @@ void query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface, dyn
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &surface_capabilities);
     vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, NULL);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &present_mode_count, NULL);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count, NULL);
 
     VkSurfaceFormatKHR formats[format_count];
     VkPresentModeKHR modes[present_mode_count];
 
     vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, formats);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &present_mode_count, modes);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count, modes);
 
     for(uint32_t i = 0; i < present_mode_count; i++) {
         vector_add(surface_formats, formats + i);
@@ -29,4 +29,9 @@ void query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface, dyn
     for(uint32_t i = 0; i < present_mode_count; i++) {
         vector_add(present_modes, modes + i);
     }
+}
+
+VkSurfaceFormatKHR choose_swap_surface_format(VkPhysicalDevice device, VkSurfaceKHR surface) {
+    uint32_t format_count = 0;
+
 }

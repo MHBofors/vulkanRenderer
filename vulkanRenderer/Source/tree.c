@@ -7,7 +7,20 @@
 
 #include "tree.h"
 
-int node_alloc(tree_node **node, uint32_t value) {
+struct node {
+    struct node *left;
+    struct node *right;
+    uint32_t value;
+};
+
+struct tree {
+    tree_node *root;
+    uint32_t size;
+};
+
+/* Node implementation*/
+
+static inline int node_alloc(tree_node **node, uint32_t value) {
     tree_node *node_new = malloc(sizeof(tree_node));
     if(node_new == NULL) {
         return -1;
@@ -17,10 +30,12 @@ int node_alloc(tree_node **node, uint32_t value) {
             .right = NULL,
             .value = value
         };
+        *node = node_new;
         return 0;
     }
 }
-void node_free(tree_node *node) {
+
+static inline void node_free(tree_node *node) {
     if(node != NULL) {
         node_free(node->left);
         node_free(node->right);
@@ -28,21 +43,75 @@ void node_free(tree_node *node) {
     } 
 }
 
-int node_add(tree_node **node, uint32_t value) {
-    tree_node *root = *node;
-    if(root == NULL) {
-        if(node_alloc(&root, value) != -1) {
-            return 1;
+static inline int node_add(tree_node *node, uint32_t value) {
+    if(value < node->value) {
+        if(node->left == NULL) {
+            return node_alloc(&node->left, value);
         } else {
-            return 0;
+            return node_add(node->left, value);
         }
-    } else if(value < root->value) {
-        return node_add(&root->left, value);
-    } else if(root->value < value) {
-        return node_add(&root->right, value);
+    } else if(value > node->value) {
+        if(node->right == NULL) {
+            return node_alloc(&node->right, value);
+        } else {
+            return node_add(node->right, value);
+        }
+    } else {
+        return -1;
     }
-    return 0;
 }
+
+
+
+tree_node *node_search(tree_node *node, uint32_t value) {
+    return node;
+}
+
+uint32_t node_get_value(tree_node *node) {
+    return node->value;
+}
+
+
+
+static inline void node_ordered_print(tree_node *node) {
+    if(node != NULL) {
+        node_ordered_print(node->left);
+
+        printf("%d\n", node->value);
+        node_ordered_print(node->right);
+    }
+}
+
+static inline void node_canonical_print(tree_node *node, uint32_t depth) {
+    if(node == NULL) {
+        for(uint32_t i = 0; i < depth; i++) {
+            printf("-");
+        }
+        printf(">x\n");
+    } else {
+        for(uint32_t i = 0; i < depth; i++) {
+            printf("-");
+        }
+        depth++;
+        printf(">%d\n", node->value);
+        printf("l:");
+        node_canonical_print(node->left, depth);
+        printf("r:");
+        node_canonical_print(node->right, depth);
+    }
+}
+
+
+
+void node_to_vector(tree_node *node, dynamic_vector *value_vector) {
+    if(node != NULL) {
+        node_to_vector(node->left, value_vector);
+        vector_add(value_vector, &node->value);
+        node_to_vector(node->right, value_vector);
+    }
+}
+
+/* Tree implementation*/
 
 int tree_alloc(binary_tree **tree) {
     binary_tree *tree_new = malloc(sizeof(binary_tree));
@@ -53,6 +122,7 @@ int tree_alloc(binary_tree **tree) {
             .root = NULL,
             .size = 0
         };
+        *tree = tree_new;
         return 0;
     }
 }
@@ -63,9 +133,47 @@ void tree_free(binary_tree *tree) {
 }
 
 int tree_add(binary_tree *tree, uint32_t value) {
-    int val_added = (&tree->root, value);
-    tree->size += val_added;
+    int val_added;
+    if(tree->root == NULL) {
+        val_added = node_alloc(&tree->root, value);
+    } else {
+        val_added = node_add(tree->root, value);
+    }
+    
+    if(val_added != -1) {
+        tree->size++;
+    }
     return val_added;
 }
 
-tree_node *tree_search(binary_tree *tree, uint32_t value);
+
+
+tree_node *tree_search(binary_tree *tree, uint32_t value) {
+    return tree->root;
+}
+
+uint32_t tree_get_size(binary_tree *tree) {
+    return tree->size;
+}
+
+
+
+void tree_ordered_print(binary_tree *tree) {
+    if(tree->root != NULL) {
+        node_ordered_print(tree->root);
+    }
+}
+
+void tree_canonical_print(binary_tree *tree) {
+    if(tree->root != NULL) {
+        node_canonical_print(tree->root, 0);
+    }
+}
+
+
+
+void tree_to_vector(binary_tree *tree, dynamic_vector *value_vector) {
+    if(tree->root != NULL) {
+        node_to_vector(tree->root, value_vector);
+    }
+}

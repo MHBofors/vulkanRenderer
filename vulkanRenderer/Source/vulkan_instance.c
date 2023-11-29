@@ -66,7 +66,7 @@ void create_instance(VkInstance *p_instance, dynamic_vector *instance_extension_
     for(int i = 0; i < available_extension_count; i++) {
         available_extension_names[i] = available_extensions[i].extensionName;
     }
-    
+    printf("\nRequired instance extensions:\n");
     if(check_extension_support(available_extension_names, available_extension_count, (const char **)vector_get_array(instance_extension_config), vector_count(instance_extension_config))) {
         printf("Unsupported extensions");
         exit(1);

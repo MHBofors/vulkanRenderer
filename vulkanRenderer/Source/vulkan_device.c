@@ -30,8 +30,12 @@ void select_physical_device(VkPhysicalDevice *physical_device, VkInstance instan
     VkPhysicalDevice devices[device_count];
     vkEnumeratePhysicalDevices(instance, &device_count, devices);
 
+    printf("\nAvailable devices:\n");
     for(uint32_t i = 0; i < device_count; i++) {
-        printf("%s", devices[i]);
+        VkPhysicalDeviceProperties device_properties;
+        vkGetPhysicalDeviceProperties(devices[i], &device_properties);
+        
+        printf("\t%s\n", device_properties.deviceName);
     }
 
     for(int i = 0; i < device_count; i++) {
@@ -67,6 +71,7 @@ uint32_t check_device_suitability(VkPhysicalDevice device, VkSurfaceKHR surface)
         available_extension_names[i] = available_extensions[i].extensionName;
     }
     
+    printf("\nRequired device extensions:\n");
     if(check_extension_support(available_extension_names, available_extension_count, required_device_extensions, required_device_extension_count)) {
         return 0;
     }
@@ -99,6 +104,9 @@ uint32_t optimal_queue_family(VkPhysicalDevice device, VkQueueFlagBits flag) {
 
 /*Fix -> select dedicated family if possible, otherwise choose available*/
 queue_family_indices find_queue_families(VkPhysicalDevice device) {
+    /*
+        Enumerate queue families & which queues are supported?
+    */
     queue_family_indices indices = {
         .graphics_family = 0,
         .transfer_family = 1,
@@ -120,6 +128,15 @@ uint32_t is_complete(queue_family_indices indices) {
 }
 
 void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, device_queues *queues, dynamic_vector *device_extension_config) {
+    binary_tree *queue_tree;
+    dynamic_vector *value_vector;
+
+    tree_alloc(&queue_tree);
+    vector_alloc(&value_vector, sizeof(uint32_t));
+
+    tree_free(queue_tree);
+    vector_free(value_vector);
+    
     queue_family_indices indices = find_queue_families(physical_device);
     
     float queue_priority = 1.0f;
