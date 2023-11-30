@@ -8,6 +8,8 @@
 #include "vulkan_utils.h"
 #include "vulkan_debug.h"
 
+#define MIN(a,b) ((a) < (b)) ? (a) : (b)
+#define MAX(a,b) ((a) < (b)) ? (b) : (a)
 
 
 /*
@@ -61,8 +63,23 @@ uint32_t hamming_weight(uint32_t n) {
     return n;
 }
 
+uint32_t hamming_weight_alt(uint32_t n) {
+    uint32_t weight;
+    for(weight = 0; n; weight++) {
+        n &= n - 1;
+    }
+    return n;
+}
+
 void binary_string(char string[32], uint32_t n) {
     for(uint32_t i = 0; i < 32; i++) {
         string[i] = (1 << (31 - i)) & n ? '1' : '0';
     }
+}
+
+uint32_t bound(uint32_t n, uint32_t a, uint32_t b) {
+    /*
+        uint32_t bounded = (a < n) ? ((n < b) ? n : b) : a;
+    */
+    return MAX(MIN(n, b), a);
 }

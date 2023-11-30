@@ -15,7 +15,10 @@
 
 uint32_t check_extension_support(const char **p_available, uint32_t available_count, const char **p_required, uint32_t required_count);
 
+void binary_string(char string[32], uint32_t n);
+
 uint32_t hamming_weight(uint32_t n);
 
-void binary_string(char string[32], uint32_t n);
+uint32_t bound(uint32_t n, uint32_t a, uint32_t b);
+
 #endif /* vulkan_utils_h */

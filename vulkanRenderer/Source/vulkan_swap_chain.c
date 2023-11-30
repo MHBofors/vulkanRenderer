@@ -33,5 +33,10 @@ void query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface, dyn
 
 VkSurfaceFormatKHR choose_swap_surface_format(VkPhysicalDevice device, VkSurfaceKHR surface) {
     uint32_t format_count = 0;
+    VkSurfaceFormatKHR format = {0};
+    return format;
+}
 
+void create_swap_chain(VkSwapchainKHR *swap_chain, VkSurfaceFormatKHR surface_format, VkPresentModeKHR present_mode, VkExtent2D extent) {
+    return;
 }

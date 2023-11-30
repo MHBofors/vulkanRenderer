@@ -14,4 +14,6 @@
 
 void query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface, dynamic_vector *surface_formats, dynamic_vector *present_modes);
 
+void create_swap_chain(VkSwapchainKHR *swap_chain, VkSurfaceFormatKHR surface_format, VkPresentModeKHR present_mode, VkExtent2D extent);
+
 #endif
