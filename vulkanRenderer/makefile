@@ -1,7 +1,7 @@
 CC = gcc
-INC_DIR = Include
-SRC_DIR = Source
-BUILD_DIR = Build
+INC_DIR = include
+SRC_DIR = source
+BUILD_DIR = build
 CFLAGS = -std=c17 -O2 -I./$(INC_DIR)
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lm
 OBJ_NAMES = main.o window.o renderer.o vulkan_device.o vulkan_swap_chain.o vulkan_instance.o vulkan_debug.o vulkan_utils.o dynamic_vector.o tree.o
