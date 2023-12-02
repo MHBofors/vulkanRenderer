@@ -55,13 +55,31 @@ void create_instance(VkInstance *p_instance, dynamic_vector *instance_extension_
         printf("Failed to create instance");
         exit(1);
     }
-
+    /*
     uint32_t available_extension_count = 0;
     vkEnumerateInstanceExtensionProperties(NULL, &available_extension_count, NULL);
-    
     VkExtensionProperties available_extensions[available_extension_count];
     vkEnumerateInstanceExtensionProperties(NULL, &available_extension_count, available_extensions);
 
+    const char *available_extension_names[available_extension_count];
+    for(int i = 0; i < available_extension_count; i++) {
+        available_extension_names[i] = available_extensions[i].extensionName;
+    }
+    printf("\nRequired instance extensions:\n");
+    if(check_extension_support(available_extension_names, available_extension_count, (const char **)vector_get_array(instance_extension_config), vector_count(instance_extension_config))) {
+        printf("Unsupported extensions");
+        exit(1);
+    }
+    */
+    
+    dynamic_vector *available_extension_vector;
+    vector_alloc(&available_extension_vector, sizeof(VkExtensionProperties));
+    
+    uint32_t available_extension_count = 0;
+    vkEnumerateInstanceExtensionProperties(NULL, &available_extension_count, NULL);
+    vkEnumerateInstanceExtensionProperties(NULL, &available_extension_count, vector_reserve(available_extension_vector, available_extension_count));
+
+    VkExtensionProperties *available_extensions = vector_get_array(available_extension_vector);
     const char *available_extension_names[available_extension_count];
     for(int i = 0; i < available_extension_count; i++) {
         available_extension_names[i] = available_extensions[i].extensionName;
