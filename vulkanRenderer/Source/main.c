@@ -26,10 +26,8 @@ int main(int argc, const char * argv[]) {
     vector_alloc(&instance_config, sizeof(const char *));
     dynamic_vector *device_config;
     vector_alloc(&device_config, sizeof(const char *));
-    dynamic_vector *formats;
-    vector_alloc(&formats, sizeof(const char *));
-    dynamic_vector *modes;
-    vector_alloc(&modes, sizeof(const char *));
+    dynamic_vector *swap_chain_images;
+    vector_alloc(&swap_chain_images, sizeof(VkImage));
     
     for(int i = 0; i < device_extension_count; i++) {
         vector_add(device_config, device_extensions + i);
@@ -54,7 +52,7 @@ int main(int argc, const char * argv[]) {
     create_surface(&surface, instance, window);
     select_physical_device(&physical_device, instance, surface);
     create_logical_device(&logical_device, physical_device, surface, &queues, device_config);
-    vector_free(device_config);
+    
 
     VkPresentModeKHR present_mode = choose_swap_present_mode(physical_device, surface);
     VkSurfaceFormatKHR surface_format = choose_swap_surface_format(physical_device, surface);
@@ -62,12 +60,17 @@ int main(int argc, const char * argv[]) {
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities);
     VkExtent2D extent = choose_swap_extent(&capabilities, window);
-
     create_swap_chain(&swap_chain, logical_device, physical_device, surface, capabilities.minImageCount + 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, surface_format, present_mode, extent);
-
+    get_swap_chain_images(swap_chain, logical_device, swap_chain_images);
+    
+    
+    vector_free(swap_chain_images);
     vkDestroySwapchainKHR(logical_device, swap_chain, NULL);
+    
     vkDestroyDevice(logical_device, NULL);
+    
     vkDestroySurfaceKHR(instance, surface, NULL);
+    
     if(enable_validation_layers) {
         destroy_debug_utils_messenger_EXT(instance, debug_messenger, NULL);
     }

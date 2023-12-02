@@ -66,8 +66,7 @@ int vector_add(dynamic_vector *vector, void *element_new) {
         }
     }
     
-    vector->element_count++;
-    vector_set(vector, element_new, vector->element_count - 1);
+    vector_set(vector, element_new, vector->element_count++);
     return 0;
 }
 
@@ -108,6 +107,32 @@ void *vector_get_array(dynamic_vector *vector) {
 
 int vector_add_array(dynamic_vector *vector, void *array, uint32_t array_count) {
     if(vector->vector_size < vector->element_count + array_count) {
+        if(1/*vector_reserve(vector, vector->element_count + array_count) == -1*/) {
+            return -1;
+        }
+    }
+    for(uint32_t i = 0; i < array_count; i++) {
+        vector_add(vector, (char *)array + i*vector->element_size);
+    }
+    return 0;
+}
+
+void *vector_reserve(dynamic_vector *vector, uint32_t count) {
+    uint32_t new_size = vector->vector_size;
+    while(new_size <= vector->element_count + count) {
+        new_size <<= 1;
+    }
+    if(vector_resize(vector, new_size) == -1) {
+        return NULL;
+    } else {
+        uint32_t old_count = vector->element_count;
+        vector->element_count += count;
+        return vector_get_element(vector, old_count);
+    }
+}
+/*
+int vector_add_array(dynamic_vector *vector, void *array, uint32_t array_count) {
+    if(vector->vector_size < vector->element_count + array_count) {
         if(vector_reserve(vector, vector->element_count + array_count) == -1) {
             return -1;
         }
@@ -126,4 +151,4 @@ int vector_reserve(dynamic_vector *vector, uint32_t count) {
     
     return vector_resize(vector, new_count);
 }
-
+*/

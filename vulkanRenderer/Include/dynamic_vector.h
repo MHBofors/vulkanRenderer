@@ -25,7 +25,7 @@ uint32_t vector_count(dynamic_vector *vector);
 uint32_t vector_size(dynamic_vector *vector);
 
 static inline int vector_resize(dynamic_vector *vector, uint32_t count);
-int vector_reserve(dynamic_vector *vector, uint32_t count);
+void *vector_reserve(dynamic_vector *vector, uint32_t count);
 
 int vector_add(dynamic_vector *vector, void *element_new);
 int vector_add_array(dynamic_vector *vector, void *array, uint32_t count);

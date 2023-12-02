@@ -119,6 +119,8 @@ void create_swap_chain(VkSwapchainKHR *swap_chain, VkDevice device, VkPhysicalDe
     }
 }
 
-void get_swap_chain_images(VkSwapchainKHR swap_chain, dynamic_vector *swap_chain_images) {
-    
+void get_swap_chain_images(VkSwapchainKHR swap_chain, VkDevice device, dynamic_vector *swap_chain_images) {
+    uint32_t image_count;
+    vkGetSwapchainImagesKHR(device, swap_chain, &image_count, NULL);
+    vkGetSwapchainImagesKHR(device, swap_chain, &image_count, vector_reserve(swap_chain_images, image_count));
 }
