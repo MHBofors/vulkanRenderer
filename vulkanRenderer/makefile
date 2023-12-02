@@ -29,10 +29,10 @@ vulkan_instance.o: $(SRC_DIR)/vulkan_instance.c $(INC_DIR)/vulkan_instance.h
 vulkan_debug.o: $(SRC_DIR)/vulkan_debug.c $(INC_DIR)/vulkan_debug.h
 	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
 
-vulkan_utils.o: $(SRC_DIR)/vulkan_utils.c $(INC_DIR)/vulkan_utils.h $(INC_DIR)/tree.h
+vulkan_utils.o: $(SRC_DIR)/vulkan_utils.c $(INC_DIR)/vulkan_utils.h tree.o
 	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
 
-tree.o: $(SRC_DIR)/tree.c $(INC_DIR)/tree.h
+tree.o: $(SRC_DIR)/tree.c $(INC_DIR)/tree.h $(INC_DIR)/dynamic_vector.h
 	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
 
 dynamic_vector.o: $(SRC_DIR)/dynamic_vector.c $(INC_DIR)/dynamic_vector.h

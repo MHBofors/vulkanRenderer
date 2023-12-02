@@ -7,8 +7,6 @@
 
 #include "vulkan_device.h"
 
-
-
 const char required_device_extension_count = 1;
 const char *required_device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -78,6 +76,10 @@ uint32_t check_device_suitability(VkPhysicalDevice device, VkSurfaceKHR surface)
     
     return 1;
 }
+
+/*
+    Fix automatic queue selection
+*/
 
 uint32_t optimal_queue_family(VkPhysicalDevice device, VkQueueFlagBits flag) {
     uint32_t best_index = ~0;

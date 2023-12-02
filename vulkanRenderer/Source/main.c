@@ -55,7 +55,6 @@ int main(int argc, const char * argv[]) {
     create_logical_device(&logical_device, physical_device, surface, &queues, device_config);
     vector_free(device_config);
     
-    query_swap_chain_support(physical_device, surface, formats, modes);
 
     if(enable_validation_layers) {
         destroy_debug_utils_messenger_EXT(instance, debug_messenger, NULL);

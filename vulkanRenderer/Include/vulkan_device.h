@@ -10,9 +10,6 @@
 
 #include <stdio.h>
 
-#endif /* vulkan_device_h */
-
-
 #include <stdlib.h>
 #include <vulkan/vulkan.h>
 #include "vulkan_utils.h"
@@ -40,3 +37,5 @@ queue_family_indices find_queue_families(VkPhysicalDevice device);
 uint32_t is_complete(queue_family_indices indices);
 
 void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, device_queues *queues, dynamic_vector *device_extension_config);
+
+#endif /* vulkan_device_h */
