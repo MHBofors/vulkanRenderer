@@ -28,6 +28,27 @@ void get_window_extension_config(dynamic_vector *window_extension_config) {
     }
 }
 
+VkExtent2D choose_swap_extent(VkSurfaceCapabilitiesKHR *capabilities, GLFWwindow *window) {
+    uint32_t max = ~0;
+    if(capabilities->currentExtent.width != max) {
+        return capabilities->currentExtent;
+    } else {
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
+        
+        VkExtent2D actual_extent = {
+            .width = (uint32_t)width,
+            .height = (uint32_t)height
+        };
+        
+        actual_extent.width = bound(actual_extent.width, capabilities->minImageExtent.width, capabilities->maxImageExtent.width);
+        actual_extent.height = bound(actual_extent.height, capabilities->minImageExtent.height, capabilities->maxImageExtent.height);
+        return actual_extent;
+    }
+}
+
+
+
 void initialise_window(GLFWwindow **window) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

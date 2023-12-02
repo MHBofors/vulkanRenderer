@@ -15,6 +15,10 @@
 
 void query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface, dynamic_vector *surface_formats, dynamic_vector *present_modes);
 
-void create_swap_chain(VkSwapchainKHR *swap_chain, VkPhysicalDevice physical_device, VkSurfaceKHR surface, uint32_t image_count, uint32_t swap_chain_usage, VkSurfaceFormatKHR surface_format, VkPresentModeKHR present_mode, VkExtent2D image_extent);
+VkPresentModeKHR choose_swap_present_mode(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+
+VkSurfaceFormatKHR choose_swap_surface_format(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+
+void create_swap_chain(VkSwapchainKHR *swap_chain, VkDevice device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, uint32_t image_count, uint32_t image_usage, VkSurfaceFormatKHR surface_format, VkPresentModeKHR present_mode, VkExtent2D image_extent);
 
 #endif

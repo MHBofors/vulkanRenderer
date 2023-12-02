@@ -42,6 +42,7 @@ int main(int argc, const char * argv[]) {
     VkPhysicalDevice physical_device;
     VkDevice logical_device;
     device_queues queues = {0};
+    VkSwapchainKHR swap_chain;
     
     initialise_window(&window);
 
@@ -54,14 +55,22 @@ int main(int argc, const char * argv[]) {
     select_physical_device(&physical_device, instance, surface);
     create_logical_device(&logical_device, physical_device, surface, &queues, device_config);
     vector_free(device_config);
-    
 
+    VkPresentModeKHR present_mode = choose_swap_present_mode(physical_device, surface);
+    VkSurfaceFormatKHR surface_format = choose_swap_surface_format(physical_device, surface);
+    VkSurfaceCapabilitiesKHR capabilities; 
+
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities);
+    VkExtent2D extent = choose_swap_extent(&capabilities, window);
+
+    create_swap_chain(&swap_chain, logical_device, physical_device, surface, capabilities.minImageCount + 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, surface_format, present_mode, extent);
+
+    vkDestroySwapchainKHR(logical_device, swap_chain, NULL);
+    vkDestroyDevice(logical_device, NULL);
+    vkDestroySurfaceKHR(instance, surface, NULL);
     if(enable_validation_layers) {
         destroy_debug_utils_messenger_EXT(instance, debug_messenger, NULL);
     }
-
-    vkDestroyDevice(logical_device, NULL);
-    vkDestroySurfaceKHR(instance, surface, NULL);
     vkDestroyInstance(instance, NULL);
     terminate_window(window);
     return 0;
