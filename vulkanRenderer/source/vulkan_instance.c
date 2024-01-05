@@ -55,6 +55,7 @@ void create_instance(VkInstance *p_instance, dynamic_vector *instance_extension_
         printf("Failed to create instance");
         exit(1);
     }
+    
     /*
     uint32_t available_extension_count = 0;
     vkEnumerateInstanceExtensionProperties(NULL, &available_extension_count, NULL);
@@ -71,9 +72,9 @@ void create_instance(VkInstance *p_instance, dynamic_vector *instance_extension_
         exit(1);
     }
     */
+
     
-    dynamic_vector *available_extension_vector;
-    vector_alloc(&available_extension_vector, sizeof(VkExtensionProperties));
+    dynamic_vector *available_extension_vector = vector_alloc(sizeof(VkExtensionProperties));
     
     uint32_t available_extension_count = 0;
     vkEnumerateInstanceExtensionProperties(NULL, &available_extension_count, NULL);

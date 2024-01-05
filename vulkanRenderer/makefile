@@ -8,7 +8,7 @@ OBJ_NAMES = main.o window.o renderer.o vulkan_device.o vulkan_swap_chain.o vulka
 OBJS = $(addprefix $(BUILD_DIR)/, $(OBJ_NAMES))
 
 $(BUILD_DIR)/renderer: $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(BUILD_DIR)/renderer $(LDFLAGS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(BUILD_DIR)/renderer $(LDFLAGS) -rpath /usr/local/lib
 
 $(BUILD_DIR)/main.o: $(SRC_DIR)/main.c $(BUILD_DIR)/window.o $(BUILD_DIR)/renderer.o
 	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)

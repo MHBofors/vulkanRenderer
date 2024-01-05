@@ -131,10 +131,10 @@ uint32_t is_complete(queue_family_indices indices) {
 
 void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, device_queues *queues, dynamic_vector *device_extension_config) {
     binary_tree *queue_tree;
-    dynamic_vector *value_vector;
+    dynamic_vector *value_vector = vector_alloc(sizeof(uint32_t));
 
     tree_alloc(&queue_tree);
-    vector_alloc(&value_vector, sizeof(uint32_t));
+    
 
     tree_free(queue_tree);
     vector_free(value_vector);

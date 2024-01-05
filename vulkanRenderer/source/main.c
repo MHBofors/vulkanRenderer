@@ -22,12 +22,9 @@ extern const uint32_t enable_validation_layers;
 #endif
 
 int main(int argc, const char * argv[]) {
-    dynamic_vector *instance_config;
-    vector_alloc(&instance_config, sizeof(const char *));
-    dynamic_vector *device_config;
-    vector_alloc(&device_config, sizeof(const char *));
-    dynamic_vector *swap_chain_images;
-    vector_alloc(&swap_chain_images, sizeof(VkImage));
+    dynamic_vector *instance_config = vector_alloc(sizeof(const char *));
+    dynamic_vector *device_config = vector_alloc(sizeof(const char *));
+    dynamic_vector *swap_chain_images = vector_alloc(sizeof(VkImage));
     
     for(int i = 0; i < device_extension_count; i++) {
         vector_add(device_config, device_extensions + i);
@@ -62,7 +59,6 @@ int main(int argc, const char * argv[]) {
     VkExtent2D extent = choose_swap_extent(&capabilities, window);
     create_swap_chain(&swap_chain, logical_device, physical_device, surface, capabilities.minImageCount + 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, surface_format, present_mode, extent);
     get_swap_chain_images(swap_chain, logical_device, swap_chain_images);
-    
     
     vector_free(swap_chain_images);
     vkDestroySwapchainKHR(logical_device, swap_chain, NULL);
