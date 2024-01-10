@@ -21,4 +21,6 @@ uint32_t hamming_weight(uint32_t n);
 
 uint32_t bound(uint32_t n, uint32_t a, uint32_t b);
 
+void error(uint32_t error_num, const char *error_message);
+
 #endif /* vulkan_utils_h */

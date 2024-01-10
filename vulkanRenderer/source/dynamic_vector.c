@@ -40,6 +40,8 @@ void vector_free(dynamic_vector *vector) {
     free(vector);
 }
 
+
+
 uint32_t vector_count(dynamic_vector *vector) {
     return vector->element_count;
 }
@@ -52,6 +54,8 @@ uint32_t vector_element_size(dynamic_vector *vector) {
     return vector->element_size;
 }
 
+
+
 static inline int vector_resize(dynamic_vector *vector, uint32_t count) {
     char *array_new = realloc(vector->array, count * vector->element_size);
     if(array_new != NULL) {
@@ -62,6 +66,8 @@ static inline int vector_resize(dynamic_vector *vector, uint32_t count) {
         return -1;
     }
 }
+
+
 
 int vector_add(dynamic_vector *vector, void *element_new) {
     if(vector->vector_size == vector->element_count) {
@@ -110,6 +116,8 @@ void vector_set(dynamic_vector *vector, void *element, uint32_t index) {
     }
 }
 
+
+
 void *vector_get_element(dynamic_vector *vector, uint32_t index) {
     if(index < 0 || vector->element_count < index) {
         return NULL;
@@ -138,6 +146,8 @@ int vector_add_array(dynamic_vector *vector, void *array, uint32_t count) {
     memcpy(vector_get_element(vector, count), array, vector->element_size * count);
     return 0;
 }
+
+
 
 void *vector_reserve(dynamic_vector *vector, uint32_t count) {
     uint32_t new_size = vector->vector_size;

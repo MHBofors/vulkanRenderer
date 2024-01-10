@@ -33,7 +33,7 @@ void create_instance(VkInstance *p_instance, dynamic_vector *instance_extension_
         .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
         .pEngineName = "No Engine",
         .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-        .apiVersion = VK_API_VERSION_1_0
+        .apiVersion = VK_API_VERSION_1_3
     };
 
     VkInstanceCreateInfo create_info = {

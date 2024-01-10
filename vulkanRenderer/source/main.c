@@ -59,7 +59,15 @@ int main(int argc, const char * argv[]) {
     VkExtent2D extent = choose_swap_extent(&capabilities, window);
     create_swap_chain(&swap_chain, logical_device, physical_device, surface, capabilities.minImageCount + 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, surface_format, present_mode, extent);
     get_swap_chain_images(swap_chain, logical_device, swap_chain_images);
-    
+
+
+    struct VkImage_T *a;
+    get_swap_chain_images(swap_chain, logical_device, swap_chain_images);
+
+    while(!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+    }
+
     vector_free(swap_chain_images);
     vkDestroySwapchainKHR(logical_device, swap_chain, NULL);
     

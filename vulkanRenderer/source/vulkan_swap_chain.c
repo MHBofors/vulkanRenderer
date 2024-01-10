@@ -44,6 +44,8 @@ void query_surface_formats(VkPhysicalDevice device, VkSurfaceKHR surface, dynami
 
 }
 
+
+
 VkSurfaceFormatKHR choose_swap_surface_format(VkPhysicalDevice physical_device, VkSurfaceKHR surface) {
     uint32_t surface_format_count = 0;
     vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &surface_format_count, NULL);
@@ -80,6 +82,8 @@ VkPresentModeKHR choose_swap_present_mode(VkPhysicalDevice physical_device, VkSu
 
     return VK_PRESENT_MODE_FIFO_KHR;//Selects how the swap chain displays images to the screen, VK_PRESENT_MODE_FIFO_KHR -> display takes images in front of queue, inserts rendered images to the back
 }
+
+
 
 void create_swap_chain(VkSwapchainKHR *swap_chain, VkDevice device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, uint32_t image_count, uint32_t image_usage, VkSurfaceFormatKHR surface_format, VkPresentModeKHR present_mode, VkExtent2D image_extent) {
     VkSurfaceCapabilitiesKHR capabilities;

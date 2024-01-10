@@ -115,12 +115,10 @@ queue_family_indices find_queue_families(VkPhysicalDevice device) {
         .compute_family = 2
     };
     
-    if(is_complete(indices)) {
-        return indices;
-    } else {
-        printf("Unsupported Queues");
-        exit(1);
+    if(!is_complete(indices)) {
+        error(1, "Unsupported Queues");
     }
+    return indices;
 }
 
 uint32_t is_complete(queue_family_indices indices) {
@@ -135,9 +133,9 @@ void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_d
 
     tree_alloc(&queue_tree);
     
-
     tree_free(queue_tree);
     vector_free(value_vector);
+
     
     queue_family_indices indices = find_queue_families(physical_device);
     

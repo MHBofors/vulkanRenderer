@@ -9,7 +9,6 @@
 #define vulkan_device_h
 
 #include <stdio.h>
-
 #include <stdlib.h>
 #include <vulkan/vulkan.h>
 #include "vulkan_utils.h"

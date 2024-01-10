@@ -4,7 +4,7 @@ SRC_DIR = source
 BUILD_DIR = build
 CFLAGS = -std=c17 -O2 -I./$(INC_DIR)
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lm
-OBJ_NAMES = main.o window.o renderer.o vulkan_device.o vulkan_swap_chain.o vulkan_instance.o vulkan_debug.o vulkan_utils.o dynamic_vector.o tree.o
+OBJ_NAMES = main.o window.o renderer.o vulkan_resources.o vulkan_device.o vulkan_swap_chain.o vulkan_instance.o vulkan_debug.o vulkan_utils.o dynamic_vector.o tree.o
 OBJS = $(addprefix $(BUILD_DIR)/, $(OBJ_NAMES))
 
 $(BUILD_DIR)/renderer: $(OBJS)
@@ -17,6 +17,9 @@ $(BUILD_DIR)/window.o: $(SRC_DIR)/window.c $(INC_DIR)/window.h $(BUILD_DIR)/dyna
 	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
 
 $(BUILD_DIR)/renderer.o: $(SRC_DIR)/renderer.c $(INC_DIR)/renderer.h $(BUILD_DIR)/vulkan_instance.o $(BUILD_DIR)/vulkan_device.o $(BUILD_DIR)/vulkan_swap_chain.o
+	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
+
+$(BUILD_DIR)/vulkan_resources.o: $(SRC_DIR)/vulkan_resources.c $(INC_DIR)/vulkan_resources.h $(BUILD_DIR)/vulkan_utils.o
 	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
 
 $(BUILD_DIR)/vulkan_swap_chain.o: $(SRC_DIR)/vulkan_swap_chain.c $(INC_DIR)/vulkan_swap_chain.h $(BUILD_DIR)/vulkan_utils.o
