@@ -161,3 +161,32 @@ void copy_buffer(VkBuffer dest_buffer, VkBuffer source_buffer, VkDevice logical_
 
     vkFreeCommandBuffers(logical_device, command_pool, 1, &command_buffer);
 }
+
+
+
+void create_frame_buffer(VkFramebuffer *framebuffer, VkDevice logical_device, VkRenderPass render_pass, VkImageView image_view, VkExtent2D extent) {
+    VkFramebufferCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .renderPass = render_pass,
+        .attachmentCount = 1,
+        .pAttachments = &image_view,
+        .width = extent.width,
+        .height = extent.height,
+        .layers = 1
+    };
+    if(vkCreateFramebuffer(logical_device, &create_info, NULL, framebuffer) != VK_SUCCESS) {
+        error(1, "Failed to create framebuffer\n");
+    }
+}
+
+void create_descriptor_pool(VkDescriptorSetLayout *descriptor_set_layout, VkDevice logical_device, VkDescriptorSetLayoutBinding *bindings, uint32_t num_bindings) {
+    
+}
+
+void create_descriptor_set(VkDescriptorSetLayout *descriptor_set_layout, VkDevice logical_device, VkDescriptorSetLayoutBinding *bindings, uint32_t num_bindings) {
+    
+}
+
+void create_descriptor_set_layout(VkDescriptorSetLayout *descriptor_set_layout, VkDevice logical_device, VkDescriptorSetLayoutBinding *bindings, uint32_t num_bindings) {
+
+}
