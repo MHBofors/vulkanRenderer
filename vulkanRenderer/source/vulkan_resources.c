@@ -179,14 +179,47 @@ void create_frame_buffer(VkFramebuffer *framebuffer, VkDevice logical_device, Vk
     }
 }
 
-void create_descriptor_pool(VkDescriptorSetLayout *descriptor_set_layout, VkDevice logical_device, VkDescriptorSetLayoutBinding *bindings, uint32_t num_bindings) {
-    
+
+
+void create_descriptor_pool(VkDescriptorPool *descriptor_pool, VkDevice logical_device, const VkDescriptorPoolSize *pool_sizes, uint32_t num_pool_size, uint32_t max_sets) {
+    VkDescriptorPoolCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .poolSizeCount = num_pool_size,
+        .pPoolSizes = pool_sizes,
+
+        .maxSets = max_sets
+    };
+
+    if(vkCreateDescriptorPool(logical_device, &create_info, NULL, descriptor_pool) != VK_SUCCESS) {
+        error(1, "Failed to created descriptor pool\n");
+    }
 }
 
-void create_descriptor_set(VkDescriptorSetLayout *descriptor_set_layout, VkDevice logical_device, VkDescriptorSetLayoutBinding *bindings, uint32_t num_bindings) {
-    
+void allocate_descriptor_set(VkDescriptorSet *descriptor_sets, VkDevice logical_device, VkDescriptorPool descriptor_pool, VkDescriptorSetLayout *descriptor_set_layouts, uint32_t num_sets) {
+    VkDescriptorSetAllocateInfo alloc_info = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptor_pool,
+        .descriptorSetCount = num_sets,
+        .pSetLayouts = descriptor_set_layouts
+    };
+
+    if(vkAllocateDescriptorSets(logical_device, &alloc_info, descriptor_sets) != VK_SUCCESS) {
+        error(1, "Failed to allocate descriptor sets\n");
+    }
 }
 
-void create_descriptor_set_layout(VkDescriptorSetLayout *descriptor_set_layout, VkDevice logical_device, VkDescriptorSetLayoutBinding *bindings, uint32_t num_bindings) {
+void update_descriptor_set(VkDevice logical_device, VkDescriptorSet descriptor_set, const VkWriteDescriptorSet *descriptor_write, uint32_t num_writes) {
+    vkUpdateDescriptorSets(logical_device, num_writes, descriptor_write, 0, NULL);
+}
 
+void create_descriptor_set_layout(VkDescriptorSetLayout *descriptor_set_layout, VkDevice logical_device, const VkDescriptorSetLayoutBinding *bindings, uint32_t num_bindings) {
+    VkDescriptorSetLayoutCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = num_bindings,
+        .pBindings = bindings
+    };
+
+    if(vkCreateDescriptorSetLayout(logical_device, &create_info, NULL, descriptor_set_layout) != VK_SUCCESS) {
+        error(1, "Failed to create descriptor set layout\n");
+    }
 }

@@ -7,7 +7,6 @@
 
 #include "vulkan_debug.h"
 
-
 #ifndef NDEBUG
     const uint32_t enable_validation_layers = 1;
 #else
