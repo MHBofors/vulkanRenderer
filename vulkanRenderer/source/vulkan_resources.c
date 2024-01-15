@@ -223,3 +223,17 @@ void create_descriptor_set_layout(VkDescriptorSetLayout *descriptor_set_layout, 
         error(1, "Failed to create descriptor set layout\n");
     }
 }
+
+
+
+void create_command_pool(VkCommandPool *command_pool, VkDevice logical_device, uint32_t queue_index) {
+    VkCommandPoolCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .queueFamilyIndex = queue_index,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
+    };
+
+    if(vkCreateCommandPool(logical_device, &create_info, NULL, command_pool) != VK_SUCCESS) {
+        error(1, "Failed to create command pool\n");
+    }
+}

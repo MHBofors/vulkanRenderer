@@ -21,6 +21,40 @@ extern const uint32_t enable_validation_layers;
     const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 #endif
 
+typedef struct {
+    GLFWwindow *window;
+    VkInstance instance;
+    VkDebugUtilsMessengerEXT debug_messenger;
+    VkSurfaceKHR surface;
+} render_api_t;
+
+void init_renderer(render_api_t *render_api, vulkan_context_t *context) {
+    dynamic_vector *instance_config = vector_alloc(sizeof(const char *));
+    dynamic_vector *device_config = vector_alloc(sizeof(const char *));
+    dynamic_vector *swap_chain_images = vector_alloc(sizeof(VkImage));
+
+    for(int i = 0; i < device_extension_count; i++) {
+        vector_add(device_config, device_extensions + i);
+    }
+
+    initialise_window(&render_api->window);
+    get_window_extension_config(instance_config);
+
+    create_instance(&render_api->instance, instance_config);
+    vector_free(instance_config);
+    setup_debug_messenger(render_api->instance, &render_api->debug_messenger);
+
+    create_surface(&render_api->surface, render_api->instance, render_api->window);
+
+
+
+    VkSurfaceCapabilitiesKHR capabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context->physical_device, render_api->surface, &capabilities);
+    VkExtent2D extent = choose_swap_extent(&capabilities, render_api->window);
+
+    
+}
+
 int main(int argc, const char * argv[]) {
     dynamic_vector *instance_config = vector_alloc(sizeof(const char *));
     dynamic_vector *device_config = vector_alloc(sizeof(const char *));
@@ -58,10 +92,6 @@ int main(int argc, const char * argv[]) {
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities);
     VkExtent2D extent = choose_swap_extent(&capabilities, window);
     create_swap_chain(&swap_chain, logical_device, physical_device, surface, capabilities.minImageCount + 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, surface_format, present_mode, extent);
-    get_swap_chain_images(swap_chain, logical_device, swap_chain_images);
-
-
-    struct VkImage_T *a;
     get_swap_chain_images(swap_chain, logical_device, swap_chain_images);
 
     while(!glfwWindowShouldClose(window)) {
