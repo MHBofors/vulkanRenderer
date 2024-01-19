@@ -27,4 +27,5 @@ void allocate_descriptor_set(VkDescriptorSet *descriptor_sets, VkDevice logical_
 void update_descriptor_set(VkDevice logical_device, VkDescriptorSet descriptor_set, const VkWriteDescriptorSet *descriptor_write, uint32_t num_writes);
 void create_descriptor_set_layout(VkDescriptorSetLayout *descriptor_set_layout, VkDevice logical_device, const VkDescriptorSetLayoutBinding *bindings, uint32_t num_bindings);
 
+void create_command_pool(VkCommandPool *command_pool, VkDevice logical_device, uint32_t queue_index);
 #endif /* vulkan_resources_h */

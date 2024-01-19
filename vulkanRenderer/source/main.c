@@ -22,11 +22,22 @@ extern const uint32_t enable_validation_layers;
 #endif
 
 typedef struct {
-    GLFWwindow *window;
-    VkInstance instance;
-    VkDebugUtilsMessengerEXT debug_messenger;
-    VkSurfaceKHR surface;
-} render_api_t;
+    float x;
+    float y;
+    float z;
+} vector_t;
+
+typedef struct {
+    float r;
+    float g;
+    float b;
+    float alpha;
+} color_t;
+
+typedef struct {
+    vector_t position;
+    color_t color;
+} vertex;
 
 void init_renderer(render_api_t *render_api, vulkan_context_t *context) {
     dynamic_vector *instance_config = vector_alloc(sizeof(const char *));
@@ -52,7 +63,7 @@ void init_renderer(render_api_t *render_api, vulkan_context_t *context) {
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context->physical_device, render_api->surface, &capabilities);
     VkExtent2D extent = choose_swap_extent(&capabilities, render_api->window);
 
-    
+
 }
 
 int main(int argc, const char * argv[]) {
@@ -74,7 +85,6 @@ int main(int argc, const char * argv[]) {
     VkSwapchainKHR swap_chain;
     
     initialise_window(&window);
-
     get_window_extension_config(instance_config);
 
     create_instance(&instance, instance_config);
@@ -94,9 +104,14 @@ int main(int argc, const char * argv[]) {
     create_swap_chain(&swap_chain, logical_device, physical_device, surface, capabilities.minImageCount + 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, surface_format, present_mode, extent);
     get_swap_chain_images(swap_chain, logical_device, swap_chain_images);
 
+    VkCommandPool command_pool;
+    create_command_pool(&command_pool, logical_device, 0);
+
     while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
+
+    vkDestroyCommandPool(logical_device, command_pool, NULL);
 
     vector_free(swap_chain_images);
     vkDestroySwapchainKHR(logical_device, swap_chain, NULL);

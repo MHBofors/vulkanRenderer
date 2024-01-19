@@ -33,7 +33,10 @@ void load_shader_module(VkShaderModule *shader_module, VkDevice logical_device, 
 
     parse_file(file_name, &shader_binary);
 
-    /* Naïve casting only works if the endianness of the binary and uint32 is the same */
+    /* 
+        Naïve casting only works if the endianness of the binary and uint32 is the same.
+        Should make a more general solution
+     */
     VkShaderModuleCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
         .codeSize = binary_size,
