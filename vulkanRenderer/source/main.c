@@ -39,31 +39,16 @@ typedef struct {
     color_t color;
 } vertex;
 
-void init_renderer(render_api_t *render_api, vulkan_context_t *context) {
+void create_context(vulkan_context_t *context, GLFWwindow **window) {
+    initialise_window(window);
+
     dynamic_vector *instance_config = vector_alloc(sizeof(const char *));
-    dynamic_vector *device_config = vector_alloc(sizeof(const char *));
-    dynamic_vector *swap_chain_images = vector_alloc(sizeof(VkImage));
-
-    for(int i = 0; i < device_extension_count; i++) {
-        vector_add(device_config, device_extensions + i);
-    }
-
-    initialise_window(&render_api->window);
     get_window_extension_config(instance_config);
-
-    create_instance(&render_api->instance, instance_config);
+    create_instance(&context->instance, instance_config);
     vector_free(instance_config);
-    setup_debug_messenger(render_api->instance, &render_api->debug_messenger);
 
-    create_surface(&render_api->surface, render_api->instance, render_api->window);
-
-
-
-    VkSurfaceCapabilitiesKHR capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context->physical_device, render_api->surface, &capabilities);
-    VkExtent2D extent = choose_swap_extent(&capabilities, render_api->window);
-
-
+    setup_debug_messenger(context->instance, &context->debug_messenger);
+    create_surface(&context->surface, context->instance, *window);
 }
 
 int main(int argc, const char * argv[]) {

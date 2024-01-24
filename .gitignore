@@ -2,3 +2,4 @@
 vulkanRenderer/renderer
 vulkanRenderer/Build/renderer
 vulkanRenderer/build/renderer
+.vscode/c_cpp_properties.json

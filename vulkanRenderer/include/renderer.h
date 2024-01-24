@@ -60,8 +60,7 @@ typedef struct {
     frame_t *frames;
 } renderer_t;
 
-
-void setup_context(vulkan_device_context_t *context, VkInstance instance, VkSurfaceKHR surface, VkExtent2D extent);
+void setup_device_context(device_context_t *device_context, vulkan_context_t *context, VkExtent2D extent);
 
 void create_render_pass(VkRenderPass *render_pass);
 
