@@ -8,7 +8,7 @@
 #include "dynamic_vector.h"
 
 struct vector {
-    char* array;
+    void* array;
     size_t element_size;
     uint32_t element_count;
     uint32_t vector_size;
@@ -123,7 +123,7 @@ void *vector_get_element(dynamic_vector *vector, uint32_t index) {
         return NULL;
     }
     else {
-        return vector->array + vector->element_size*index;
+        return (char *)vector->array + vector->element_size*index;
     }
 }
 
