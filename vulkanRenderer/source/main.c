@@ -21,35 +21,6 @@ extern const uint32_t enable_validation_layers;
     const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 #endif
 
-typedef struct {
-    float x;
-    float y;
-    float z;
-} vector_t;
-
-typedef struct {
-    float r;
-    float g;
-    float b;
-    float alpha;
-} color_t;
-
-typedef struct {
-    vector_t position;
-    color_t color;
-} vertex_t;
-
-void create_context(vulkan_context_t *context, GLFWwindow **window) {
-    initialise_window(window);
-
-    dynamic_vector *instance_config = vector_alloc(sizeof(const char *));
-    get_window_extension_config(instance_config);
-    create_instance(&context->instance, instance_config);
-    vector_free(instance_config);
-
-    setup_debug_messenger(context->instance, &context->debug_messenger);
-    create_surface(&context->surface, context->instance, *window);
-}
 
 int main(int argc, const char * argv[]) {
     /* Initialization */

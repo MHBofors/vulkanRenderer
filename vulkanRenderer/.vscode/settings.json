@@ -2,6 +2,7 @@
     "files.associations": {
         "vulkan_utils.h": "c",
         "cstdlib": "c",
-        "vector": "c"
+        "vector": "c",
+        "vulkan_render_pipeline.h": "c"
     }
 }
