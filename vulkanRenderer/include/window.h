@@ -15,14 +15,16 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-void create_surface(VkSurfaceKHR *surface, VkInstance instance, GLFWwindow *window);
+typedef GLFWwindow* window_t;
+
+void create_surface(VkSurfaceKHR *surface, VkInstance instance, window_t window);
 
 void get_window_extension_config(dynamic_vector *window_extension_config);
 
-VkExtent2D choose_swap_extent(VkSurfaceCapabilitiesKHR *capabilities, GLFWwindow *window);
+VkExtent2D choose_swap_extent(VkSurfaceCapabilitiesKHR *capabilities, window_t window);
 
-void initialise_window(GLFWwindow **window);
+void initialise_window(window_t *window);
 
-void terminate_window(GLFWwindow *window);
+void terminate_window(window_t window);
 
 #endif /* window_h */

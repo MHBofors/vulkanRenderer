@@ -38,7 +38,7 @@ typedef struct device_context_t {
     device_queues queues;
 } device_context_t;
 
-typedef struct swap_resources_t {
+typedef struct swap_chain_t {
     VkSwapchainKHR swap_chain;
     VkExtent2D extent;
     VkFormat image_format;
@@ -69,17 +69,21 @@ typedef struct frame_t {
     VkFence in_flight_fence;
     VkSemaphore image_available_semaphore;
     VkSemaphore render_finished_semaphore;
-    VkCommandBuffer *command_buffer;
+    VkCommandBuffer command_buffer;
 } frame_t;
 
 typedef struct renderer_t {
-    vulkan_context_t context;
+    window_t window;
+    vulkan_context_t vulkan_context;
     device_context_t device_context;
-    VkSwapchainKHR swap_chain;
+    swap_resources_t swap_resources;
+    render_pipeline_t render_pipeline;
     VkCommandPool command_pool;
     uint32_t frame_count;
     frame_t *frames;
 } renderer_t;
+
+void setup_context(vulkan_context_t *context, window_t window);
 
 void setup_device_context(device_context_t *device_context, vulkan_context_t *context);
 
@@ -87,7 +91,9 @@ void create_vertex_buffer(buffer_t *vertex_buffer, dynamic_vector *vertex_vector
 
 void create_index_buffer(buffer_t *index_buffer, dynamic_vector *index_vector);
 
-void create_frame(frame_t *frame, VkDevice logical_device, VkCommandBuffer *command_buffer);
+void create_frame(frame_t *frame, VkDevice logical_device, VkCommandPool command_pool);
+
+void draw_frame();
 
 void begin_frame(frame_t *frame);
 

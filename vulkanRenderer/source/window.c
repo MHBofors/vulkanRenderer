@@ -11,7 +11,7 @@
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
-void create_surface(VkSurfaceKHR *surface, VkInstance instance, GLFWwindow *window) {
+void create_surface(VkSurfaceKHR *surface, VkInstance instance, window_t window) {
     if (glfwCreateWindowSurface(instance, window, NULL, surface) != VK_SUCCESS) {
         printf("Failed to create window surface!");
         exit(1);
@@ -28,7 +28,7 @@ void get_window_extension_config(dynamic_vector *window_extension_config) {
     }
 }
 
-VkExtent2D choose_swap_extent(VkSurfaceCapabilitiesKHR *capabilities, GLFWwindow *window) {
+VkExtent2D choose_swap_extent(VkSurfaceCapabilitiesKHR *capabilities, window_t window) {
     uint32_t max = ~0;
     if(capabilities->currentExtent.width != max) {
         return capabilities->currentExtent;
@@ -49,7 +49,7 @@ VkExtent2D choose_swap_extent(VkSurfaceCapabilitiesKHR *capabilities, GLFWwindow
 
 
 
-void initialise_window(GLFWwindow **window) {
+void initialise_window(window_t *window) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -57,7 +57,7 @@ void initialise_window(GLFWwindow **window) {
     *window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", NULL, NULL);
 }
 
-void terminate_window(GLFWwindow *window) {
+void terminate_window(window_t window) {
     glfwDestroyWindow(window);
     
     glfwTerminate();
