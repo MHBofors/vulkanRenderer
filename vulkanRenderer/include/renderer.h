@@ -87,16 +87,36 @@ void setup_context(vulkan_context_t *context, window_t window);
 
 void setup_device_context(device_context_t *device_context, vulkan_context_t *context);
 
-void create_vertex_buffer(buffer_t *vertex_buffer, dynamic_vector *vertex_vector);
+void setup_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *vulkan_context, device_context_t *device_context, window_t window);
 
-void create_index_buffer(buffer_t *index_buffer, dynamic_vector *index_vector);
+void setup_render_pipeline_simple(render_pipeline_t *render_pipeline, device_context_t device_context, swap_resources_t swap_resources);
+
+void clean_up_context(vulkan_context_t *context);
+
+void clean_up_device_context(device_context_t *device_context);
+
+void clean_up_swap_resources(swap_resources_t *swap_resources, device_context_t *device_context);
+
+void clean_up_render_pipeline(render_pipeline_t *render_pipeline, device_context_t *device_context);
+
+void create_vertex_buffer(buffer_t *vertex_buffer, dynamic_vector *vertex_vector, VkDevice logical_device, VkPhysicalDevice physical_device, VkQueue queue, VkCommandPool command_pool);
+
+void create_index_buffer(buffer_t *index_buffer, dynamic_vector *index_vector, VkDevice logical_device, VkPhysicalDevice physical_device, VkQueue queue, VkCommandPool command_pool);
+
+void destroy_buffer(buffer_t *buffer, VkDevice logical_device);
 
 void create_frame(frame_t *frame, VkDevice logical_device, VkCommandPool command_pool);
 
+frame_t *create_frames(VkDevice logical_device, VkCommandPool command_pool, uint32_t frame_count);
+
+void clean_up_frame(frame_t *frames, VkDevice logical_device);
+
+void clean_up_frames(frame_t *frames, uint32_t frame_count, VkDevice logical_device);
+
 void draw_frame();
 
-void begin_frame(frame_t *frame);
+uint32_t begin_frame(frame_t *frame, VkDevice logical_device, VkSwapchainKHR swap_chain);
 
-void end_frame();
+void end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_queue, VkQueue present_queue, uint32_t image_index);
 
 #endif /* renderer_h */

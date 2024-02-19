@@ -47,7 +47,9 @@ VkExtent2D choose_swap_extent(VkSurfaceCapabilitiesKHR *capabilities, window_t w
     }
 }
 
-
+int window_should_close(window_t window) {
+    return glfwWindowShouldClose(window);
+}
 
 void initialise_window(window_t *window) {
     glfwInit();

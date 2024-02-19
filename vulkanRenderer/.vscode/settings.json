@@ -3,6 +3,8 @@
         "vulkan_utils.h": "c",
         "cstdlib": "c",
         "vector": "c",
-        "vulkan_render_pipeline.h": "c"
+        "vulkan_render_pipeline.h": "c",
+        "window.h": "c",
+        "complex": "c"
     }
 }

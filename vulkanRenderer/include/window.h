@@ -23,6 +23,8 @@ void get_window_extension_config(dynamic_vector *window_extension_config);
 
 VkExtent2D choose_swap_extent(VkSurfaceCapabilitiesKHR *capabilities, window_t window);
 
+int window_should_close(window_t window);
+
 void initialise_window(window_t *window);
 
 void terminate_window(window_t window);
