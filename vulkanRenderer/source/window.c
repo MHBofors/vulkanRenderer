@@ -9,7 +9,7 @@
 
 
 const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
+const uint32_t HEIGHT = 800;
 
 void create_surface(VkSurfaceKHR *surface, VkInstance instance, window_t window) {
     if (glfwCreateWindowSurface(instance, window, NULL, surface) != VK_SUCCESS) {
@@ -18,9 +18,13 @@ void create_surface(VkSurfaceKHR *surface, VkInstance instance, window_t window)
     }
 }
 
+void get_framebuffer_size(window_t window, int *width, int *height) {
+    glfwGetFramebufferSize(window, width, height);
+}
+
+
 void get_window_extension_config(dynamic_vector *window_extension_config) {
-     uint32_t glfw_extension_count = 0;
-    
+    uint32_t glfw_extension_count = 0;
     const char **glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
     
     for(int i = 0; i < glfw_extension_count; i++) {

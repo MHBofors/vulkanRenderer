@@ -61,6 +61,20 @@ void setup_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *vu
     }
 }
 
+void recreate_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *context, device_context_t *device, render_pipeline_t *render_pipeline, window_t window) {
+    int width = 0, height = 0;
+    //get_framebuffer_size(window, &width, &height);
+
+    vkDeviceWaitIdle(device->logical_device);
+
+    clean_up_swap_resources(swap_resources, device);
+
+    setup_swap_resources(swap_resources, context, device, window);
+    for(uint32_t i = 0; i < swap_resources->image_count; i++) {
+        create_frame_buffer(swap_resources->framebuffers + i, device->logical_device, render_pipeline->render_pass, swap_resources->image_views[i], swap_resources->extent);
+    }
+}
+
 void setup_render_pipeline_simple(render_pipeline_t *render_pipeline, device_context_t device_context, swap_resources_t swap_resources) {
     create_render_pass_simple(&render_pipeline->render_pass, device_context.logical_device, swap_resources.image_format);
 

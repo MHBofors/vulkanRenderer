@@ -102,7 +102,7 @@ void create_swap_chain(VkSwapchainKHR *swap_chain, VkDevice device, VkPhysicalDe
         .preTransform = capabilities.currentTransform,//Can specify transforms to apply to images in swap chain
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,//Opaque -> alpha channel should not be used to blend with other windows
         .clipped = VK_TRUE,//True -> we don't care about color of obscured pixel
-        .oldSwapchain = VK_NULL_HANDLE,//If swap chain must be replaced, then reference to old one must be given here
+        .oldSwapchain = VK_NULL_HANDLE//If swap chain must be replaced, then reference to old one must be given here
     };
     
     queue_family_indices indices = find_queue_families(physical_device);

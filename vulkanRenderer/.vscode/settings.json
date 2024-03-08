@@ -5,6 +5,14 @@
         "vector": "c",
         "vulkan_render_pipeline.h": "c",
         "window.h": "c",
-        "complex": "c"
+        "complex": "c",
+        "sdl.h": "c",
+        "sdl_main.h": "c",
+        "sdl_render.h": "c",
+        "dynamic_vector.h": "c",
+        "sdl_vulkan.h": "c",
+        "sdl_video.h": "c",
+        "begin_code.h": "c",
+        "sdl_system.h": "c"
     }
 }

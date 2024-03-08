@@ -10,4 +10,11 @@
 
 #include <stdio.h>
 
+typedef struct quaternion_t {
+    float r;
+    float i;
+    float j;
+    float k;
+} quaternion_t;
+
 #endif /* graphics_matrices_h */

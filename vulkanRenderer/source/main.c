@@ -11,7 +11,9 @@
 #include <time.h>
 #include "renderer.h"
 #include "window.h"
+#include <complex.h>
 
+double complex *a;
 
 const uint32_t frames_in_flight = 2;
 extern const uint32_t enable_validation_layers;
@@ -55,7 +57,7 @@ int main(int argc, const char * argv[]) {
 
     vertex_t vertex;
     
-    uint32_t N = 37;
+    uint32_t N = 128;
     float a = 2*M_PI/N;
 
     for(uint32_t i = 0; i < N; i++) {
@@ -66,9 +68,9 @@ int main(int argc, const char * argv[]) {
                 .z = 0
             },
             .color = {
-                .r = (cos(7*a*i)+1.0f)/2,
-                .g = (cos(3*a*i)+1.0f)/2,
-                .b = (sin(3*a*i)+1.0f)/2,
+                .r = (cos(13*a*i+5)+1.0f)/4 + 0.25,
+                .g = (cos(17*a*i+7)+1.0f)/4 + 0.25,
+                .b = (sin(19*a*i+11)+1.0f)/4 + 0.35,
                 .alpha = 1.0f
             }
         };
@@ -103,12 +105,19 @@ int main(int argc, const char * argv[]) {
     uint32_t frame_index = 0;
 
     clock_t time_start = clock();
+
+    frame_t *frame;
+    VkCommandBuffer command_buffer;
     while(!window_should_close(window)) {
         glfwPollEvents();
         float d_time = (float)(clock() - time_start)/CLOCKS_PER_SEC;
-        image_index = begin_frame(frames + frame_index, device.logical_device, swap_resources.swap_chain);
 
-        begin_command_buffer(frames[frame_index].command_buffer, 0);
+        frame = frames + frame_index;
+        command_buffer = frame->command_buffer;
+
+        image_index = begin_frame(frame, device.logical_device, swap_resources.swap_chain);
+
+        begin_command_buffer(command_buffer, 0);
 
         VkClearValue clear_color = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
 
@@ -124,8 +133,8 @@ int main(int argc, const char * argv[]) {
             .pClearValues = &clear_color
         };
 
-        vkCmdBeginRenderPass(frames[frame_index].command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(frames[frame_index].command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipeline.graphics_pipeline);
+        vkCmdBeginRenderPass(command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipeline.graphics_pipeline);
 
         VkViewport viewport = {
             .x = 0.0f,
@@ -141,20 +150,20 @@ int main(int argc, const char * argv[]) {
             .extent = swap_resources.extent
         };
 
-        vkCmdSetViewport(frames[frame_index].command_buffer, 0, 1, &viewport);
-        vkCmdSetScissor(frames[frame_index].command_buffer, 0, 1, &scissor);
+        vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+        vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
         VkBuffer vertex_buffers[] = {vertex_buffer.buffer};
         VkDeviceSize offsets[] = {0};
 
-        vkCmdBindVertexBuffers(frames[frame_index].command_buffer, 0, 1, vertex_buffers, offsets);//Parameters 2, 3 specifies the offsets and how many vertex buffers to bind. Parameters 4, 5 specifies the array of vertex buffers to write and what offset to start reading from
-        vkCmdBindIndexBuffer(frames[frame_index].command_buffer, index_buffer.buffer, 0, VK_INDEX_TYPE_UINT16);
-        vkCmdDrawIndexed(frames[frame_index].command_buffer, vector_count(index_vector), 1, 0, 0, 0);
-        vkCmdEndRenderPass(frames[frame_index].command_buffer);
+        vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);//Parameters 2, 3 specifies the offsets and how many vertex buffers to bind. Parameters 4, 5 specifies the array of vertex buffers to write and what offset to start reading from
+        vkCmdBindIndexBuffer(command_buffer, index_buffer.buffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdDrawIndexed(command_buffer, vector_count(index_vector), 1, 0, 0, 0);
+        vkCmdEndRenderPass(command_buffer);
 
-        end_command_buffer(frames[frame_index].command_buffer);
+        end_command_buffer(command_buffer);
 
-        end_frame(frames + frame_index, swap_resources.swap_chain, device.queues.graphics_queue, device.queues.graphics_queue, image_index);
+        end_frame(frame, swap_resources.swap_chain, device.queues.graphics_queue, device.queues.graphics_queue, image_index);
         frame_index = (frame_index + 1) % frames_in_flight;
     }
 
