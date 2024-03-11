@@ -13,7 +13,6 @@
 #include "window.h"
 #include <complex.h>
 
-double complex *a;
 
 const uint32_t frames_in_flight = 2;
 extern const uint32_t enable_validation_layers;
@@ -57,7 +56,7 @@ int main(int argc, const char * argv[]) {
 
     vertex_t vertex;
     
-    uint32_t N = 128;
+    uint32_t N = 16;
     float a = 2*M_PI/N;
 
     for(uint32_t i = 0; i < N; i++) {
@@ -105,7 +104,7 @@ int main(int argc, const char * argv[]) {
     uint32_t frame_index = 0;
 
     clock_t time_start = clock();
-
+    
     frame_t *frame;
     VkCommandBuffer command_buffer;
     while(!window_should_close(window)) {

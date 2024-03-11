@@ -52,6 +52,7 @@ typedef struct render_pipeline_t {
     VkRenderPass render_pass;
     VkPipelineLayout pipeline_layout;
     VkPipeline graphics_pipeline;
+    VkPipeline compute_pipeline;
 } render_pipeline_t;
 
 typedef struct buffer_t {
@@ -79,6 +80,7 @@ typedef struct renderer_t {
     swap_resources_t swap_resources;
     render_pipeline_t render_pipeline;
     VkCommandPool command_pool;
+    VkDescriptorPool descriptor_pool;
     uint32_t frame_count;
     frame_t *frames;
 } renderer_t;

@@ -22,7 +22,7 @@ uint32_t select_memory_type(VkPhysicalDevice physical_device, uint32_t type_filt
 
 
 
-void create_image(VkImage *image, VkDeviceMemory *image_memory, VkDevice logical_device, VkPhysicalDevice physical_device, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties) {
+void create_image(VkImage *image, VkDeviceMemory *image_memory, VkDevice logical_device, VkPhysicalDevice physical_device, uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits sample_count, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties) {
     VkExtent3D image_extent = {
         .width = width,
         .height = height,
@@ -33,13 +33,13 @@ void create_image(VkImage *image, VkDeviceMemory *image_memory, VkDevice logical
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType = VK_IMAGE_TYPE_2D,
         .extent = image_extent,
-        .mipLevels = 1,
+        .mipLevels = mip_levels,
         .arrayLayers = 1,
         .format = format,
         .tiling = tiling,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         .usage = usage,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .samples = sample_count,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
 
@@ -68,11 +68,11 @@ void create_image(VkImage *image, VkDeviceMemory *image_memory, VkDevice logical
     vkBindImageMemory(logical_device, *image, *image_memory, 0);
 }
 
-void create_image_view(VkImageView *image_view, VkImage image, VkDevice logical_device, VkFormat image_format) {
+void create_image_view(VkImageView *image_view, VkImage image, VkDevice logical_device, uint32_t mip_levels, VkFormat image_format) {
     VkImageSubresourceRange subresource_range = {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .baseMipLevel = 0,
-        .levelCount = 1,
+        .levelCount = mip_levels,
         .baseArrayLayer = 0,
         .layerCount = 1
     };
