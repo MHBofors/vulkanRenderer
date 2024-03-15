@@ -41,7 +41,7 @@ int main(int argc, const char * argv[]) {
     setup_render_pipeline_simple(&render_pipeline, device, swap_resources);
 
     for(uint32_t i = 0; i < swap_resources.image_count; i++) {
-        create_frame_buffer(swap_resources.framebuffers + i, device.logical_device, render_pipeline.render_pass, swap_resources.image_views[i], swap_resources.extent);
+        create_frame_buffer(swap_resources.framebuffers + i, device.logical_device, render_pipeline.render_pass, 1, swap_resources.image_views + i, swap_resources.extent);
     }
 
     queue_family_indices indices = find_queue_families(device.physical_device);
@@ -56,7 +56,7 @@ int main(int argc, const char * argv[]) {
 
     vertex_t vertex;
     
-    uint32_t N = 16;
+    uint32_t N = 256;
     float a = 2*M_PI/N;
 
     for(uint32_t i = 0; i < N; i++) {

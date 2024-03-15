@@ -57,7 +57,7 @@ void setup_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *vu
     vkGetSwapchainImagesKHR(device_context->logical_device, swap_resources->swap_chain, &swap_resources->image_count, swap_resources->images);
     
     for(uint32_t i = 0; i < swap_resources->image_count; i++) {
-        create_image_view(swap_resources->image_views + i, swap_resources->images[i], device_context->logical_device, swap_resources->image_format);
+        create_image_view(swap_resources->image_views + i, swap_resources->images[i], device_context->logical_device, 1, swap_resources->image_format);
     }
 }
 
@@ -71,7 +71,7 @@ void recreate_swap_resources(swap_resources_t *swap_resources, vulkan_context_t 
 
     setup_swap_resources(swap_resources, context, device, window);
     for(uint32_t i = 0; i < swap_resources->image_count; i++) {
-        create_frame_buffer(swap_resources->framebuffers + i, device->logical_device, render_pipeline->render_pass, swap_resources->image_views[i], swap_resources->extent);
+        create_frame_buffer(swap_resources->framebuffers + i, device->logical_device, render_pipeline->render_pass, 1, &swap_resources->image_views[i], swap_resources->extent);
     }
 }
 
@@ -333,7 +333,7 @@ void end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_queue
     }
 
     VkSwapchainKHR swap_chains[] = {swap_chain};
-
+    
     VkPresentInfoKHR present_info = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,

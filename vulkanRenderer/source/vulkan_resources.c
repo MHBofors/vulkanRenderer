@@ -88,6 +88,10 @@ void create_image_view(VkImageView *image_view, VkImage image, VkDevice logical_
     vkCreateImageView(logical_device, &create_info, NULL, image_view);
 }
 
+void transition_image(VkCommandBuffer command_buffer, VkImage image, VkImageLayout source_layout, VkImageLayout destination_layout, VkPipelineStageFlags source_stage, VkPipelineStageFlags destination_stage, uint32_t mip_levels) {
+
+}
+
 
 
 void create_buffer(VkBuffer *buffer, VkDeviceMemory *buffer_memory, VkDevice logical_device, VkPhysicalDevice physical_device, VkDeviceSize device_size, VkBufferUsageFlagBits buffer_usage, VkMemoryPropertyFlags properties) {
@@ -164,16 +168,17 @@ void copy_buffer(VkBuffer dest_buffer, VkBuffer source_buffer, VkDevice logical_
 
 
 
-void create_frame_buffer(VkFramebuffer *framebuffer, VkDevice logical_device, VkRenderPass render_pass, VkImageView image_view, VkExtent2D extent) {
+void create_frame_buffer(VkFramebuffer *framebuffer, VkDevice logical_device, VkRenderPass render_pass, uint32_t attachment_count, VkImageView *image_views, VkExtent2D extent) {
     VkFramebufferCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .renderPass = render_pass,
-        .attachmentCount = 1,
-        .pAttachments = &image_view,
+        .attachmentCount = attachment_count,
+        .pAttachments = image_views,
         .width = extent.width,
         .height = extent.height,
         .layers = 1
     };
+
     if(vkCreateFramebuffer(logical_device, &create_info, NULL, framebuffer) != VK_SUCCESS) {
         error(1, "Failed to create framebuffer\n");
     }
@@ -181,12 +186,11 @@ void create_frame_buffer(VkFramebuffer *framebuffer, VkDevice logical_device, Vk
 
 
 
-void create_descriptor_pool(VkDescriptorPool *descriptor_pool, VkDevice logical_device, const VkDescriptorPoolSize *pool_sizes, uint32_t num_pool_size, uint32_t max_sets) {
+void create_descriptor_pool(VkDescriptorPool *descriptor_pool, VkDevice logical_device, const VkDescriptorPoolSize *pool_sizes, uint32_t pool_size_count, uint32_t max_sets) {
     VkDescriptorPoolCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .poolSizeCount = num_pool_size,
+        .poolSizeCount = pool_size_count,
         .pPoolSizes = pool_sizes,
-
         .maxSets = max_sets
     };
 

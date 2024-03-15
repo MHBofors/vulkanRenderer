@@ -9,6 +9,10 @@
 #define graphics_matrices_h
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#define TOL 1E-6
 
 typedef struct quaternion_t {
     float r;

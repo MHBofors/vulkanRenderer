@@ -66,6 +66,17 @@ typedef struct host_buffer_t {
     void *mapped_memory;
 } host_buffer_t;
 
+typedef struct image_t {
+    VkImage image;
+    VkDeviceMemory memory;
+} image_t;
+
+typedef struct host_image_t {
+    VkImage image;
+    VkDeviceMemory memory;
+    void *mapped_memory;
+} host_image_t;
+
 typedef struct frame_t {
     VkFence in_flight_fence;
     VkSemaphore image_available_semaphore;

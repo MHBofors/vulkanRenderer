@@ -13,7 +13,7 @@ float inner_product(uint32_t n, float u[n], float v[n]) {
     for(uint32_t i = 0; i < n; i++) {
         sum += u[i]*v[i];
     }
-    return;
+    return sum;
 }
 
 float vector_norm(uint32_t n, float u[n]) {
@@ -33,20 +33,20 @@ void vector_normalise(uint32_t n, float u[n], float v[n]) {
     }
     scalar_product(n, 1/norm, u, v);
 }
-
+/*
 void vector_add(uint32_t n, float u[n], float v[n], float w[n]) {
     for(uint32_t i = 0; i < n; i++) {
         w[i] = u[i]+v[i];
     }
 }
-
+*/
 void vector_subtract(uint32_t n, float u[n], float v[n], float w[n]) {
     for(uint32_t i = 0; i < n; i++) {
         w[i] = u[i]-v[i];
     }
 }
 
-void cross_product(quaternion_t p, quaternion_t q) {
+quaternion_t cross_product(quaternion_t p, quaternion_t q) {
     return (quaternion_t){
         .r = 0,
         .i = p.j*q.k - p.k*q.j,
@@ -74,7 +74,7 @@ quaternion_t quaternion_scalar_product(float a, quaternion_t q) {
 quaternion_t quaternion_normalise(quaternion_t q) {
     float norm = quaternion_norm(q);
     if(norm < TOL) {
-        return;
+        return q;
     }
 
     return quaternion_scalar_product(1/norm, q);
@@ -104,5 +104,5 @@ quaternion_t quaternion_rotation(float angle, quaternion_t q) {
 }
 
 quaternion_t vector_division(quaternion_t p, quaternion_t q) {
-    quaternion_t axis =
+    quaternion_t axis = {};
 }
