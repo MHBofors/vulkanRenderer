@@ -26,6 +26,11 @@ typedef struct {
     color_t color;
 } vertex_t;
 
+typedef struct {
+    vertex_t vertex;
+    float u, v;
+} textured_vertex_t;
+
 typedef struct vulkan_context_t {
     VkInstance instance;
     VkSurfaceKHR surface;

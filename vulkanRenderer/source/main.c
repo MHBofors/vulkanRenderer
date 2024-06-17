@@ -25,6 +25,74 @@ extern const uint32_t enable_validation_layers;
     const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 #endif
 
+void create_texture_render_pass(VkRenderPass *render_pass, VkDevice logical_device, VkFormat image_format) {
+    VkAttachmentDescription texture_attachment = {
+        .format = image_format,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkAttachmentReference texture_attachment_reference = {
+        .attachment = 0,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    };
+
+    VkSubpassDescription subpass = {
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_COMPUTE,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &texture_attachment_reference
+    };
+
+    VkSubpassDependency dependency = {
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0,
+        .srcStageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        .srcAccessMask = 0,
+        .dstStageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+    };
+
+    VkRenderPassCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .attachmentCount = 1,
+        .pAttachments = &texture_attachment,
+        .subpassCount = 1,
+        .pSubpasses = &subpass,
+        .dependencyCount = 1,
+        .pDependencies = &dependency
+    };
+
+    if(vkCreateRenderPass(logical_device, &create_info, NULL, render_pass) != VK_SUCCESS) {
+        error(1, "Failed to create render pass");
+    }
+}
+
+void create_linear_sampler() {
+    
+}
+
+void create_compute_pipeline(VkPipeline *compute_pipeline, VkPipelineLayout pipeline_layout, VkDevice logical_device, const char *file_name) {
+    VkShaderModule compute_shader;
+    load_shader_module(compute_shader, logical_device, file_name);
+    VkPipelineShaderStageCreateInfo shader_stage_create_info = create_shader_stage(compute_shader, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+
+    VkComputePipelineCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .layout = pipeline_layout,
+        .stage = shader_stage_create_info,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
+
+    if(vkCreateComputePipelines(logical_device, VK_NULL_HANDLE, 1, &create_info, NULL, compute_pipeline) != VK_SUCCESS) {
+        error(1, "Failed to create compute pipeline");
+    }
+}
 
 int main(int argc, const char * argv[]) {
     /* Initialization */
@@ -42,6 +110,22 @@ int main(int argc, const char * argv[]) {
 
     for(uint32_t i = 0; i < swap_resources.image_count; i++) {
         create_frame_buffer(swap_resources.framebuffers + i, device.logical_device, render_pipeline.render_pass, 1, swap_resources.image_views + i, swap_resources.extent);
+    }
+
+    image_t fractal_images[frames_in_flight];
+    VkImageView fractal_image_views[frames_in_flight];
+    VkFramebuffer fractal_frame_buffer[frames_in_flight];
+
+    VkRenderPass compute_render_pass;
+    VkDescriptorSetLayout compute_pipeline_layout;
+
+    VkMemoryBarrier compute_pipeline_barriers;
+    
+    for(uint32_t i = 0; i < frames_in_flight; i++) {
+        create_image(&fractal_images[i].image, &fractal_images[i].memory, device.logical_device, device.physical_device, swap_resources.extent.width,  swap_resources.extent.height, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R32_SFLOAT, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        create_image_view(fractal_image_views + i, fractal_images[i].image, device.logical_device, 1, VK_FORMAT_R32_SFLOAT);
+        
+        VkImageView image_views[2] = {swap_resources.image_views[i], fractal_image_views[i]};
     }
 
     queue_family_indices indices = find_queue_families(device.physical_device);

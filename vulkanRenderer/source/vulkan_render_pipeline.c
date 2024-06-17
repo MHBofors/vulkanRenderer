@@ -54,7 +54,7 @@ void create_render_pass_simple(VkRenderPass *render_pass, VkDevice logical_devic
     
     
     if (vkCreateRenderPass(logical_device, &create_info, NULL, render_pass) != VK_SUCCESS) {
-        printf("Failed to create render pass!");
+        printf("Failed to create render pass\n");
         exit(1);
     }
 }

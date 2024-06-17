@@ -199,11 +199,11 @@ void create_descriptor_pool(VkDescriptorPool *descriptor_pool, VkDevice logical_
     }
 }
 
-void allocate_descriptor_set(VkDescriptorSet *descriptor_sets, VkDevice logical_device, VkDescriptorPool descriptor_pool, VkDescriptorSetLayout *descriptor_set_layouts, uint32_t num_sets) {
+void allocate_descriptor_set(VkDescriptorSet *descriptor_sets, VkDevice logical_device, VkDescriptorPool descriptor_pool, VkDescriptorSetLayout *descriptor_set_layouts, uint32_t set_count) {
     VkDescriptorSetAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = descriptor_pool,
-        .descriptorSetCount = num_sets,
+        .descriptorSetCount = set_count,
         .pSetLayouts = descriptor_set_layouts
     };
 

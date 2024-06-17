@@ -50,3 +50,15 @@ void load_shader_module(VkShaderModule *shader_module, VkDevice logical_device, 
 
     free(shader_binary);
 }
+
+VkPipelineShaderStageCreateInfo create_shader_stage(VkShaderModule shader_module, VkShaderStageFlagBits shader_stage) {
+    VkPipelineShaderStageCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = shader_stage,
+        .module = shader_module,
+        .pName = "main",
+        .pSpecializationInfo = NULL
+    };
+    
+    return create_info;
+}
