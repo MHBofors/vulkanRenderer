@@ -78,8 +78,8 @@ void create_linear_sampler() {
 
 void create_compute_pipeline(VkPipeline *compute_pipeline, VkPipelineLayout pipeline_layout, VkDevice logical_device, const char *file_name) {
     VkShaderModule compute_shader;
-    load_shader_module(compute_shader, logical_device, file_name);
-    VkPipelineShaderStageCreateInfo shader_stage_create_info = create_shader_stage(compute_shader, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    load_shader_module(&compute_shader, logical_device, file_name);
+    VkPipelineShaderStageCreateInfo shader_stage_create_info = create_shader_stage(compute_shader, VK_SHADER_STAGE_COMPUTE_BIT);
 
     VkComputePipelineCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
@@ -260,6 +260,11 @@ int main(int argc, const char * argv[]) {
     clean_up_frames(frames, frames_in_flight, device.logical_device);
     vkDestroyCommandPool(device.logical_device, command_pool, NULL);
     clean_up_render_pipeline(&render_pipeline, &device);
+    for(uint32_t i = 0; i < frames_in_flight; i++) {
+        vkFreeMemory(device.logical_device, fractal_images[i].memory, NULL);
+        vkDestroyImage(device.logical_device, fractal_images[i].image, NULL);
+        vkDestroyImageView(device.logical_device, fractal_image_views[i], NULL);
+    }
     clean_up_device_context(&device);
     clean_up_context(&context);
  

@@ -74,7 +74,6 @@ uint32_t check_validation_layer_support(void)
     uint32_t layer_count;
     vkEnumerateInstanceLayerProperties(&layer_count, NULL);
 
-    
     VkLayerProperties available_layers[layer_count];
     vkEnumerateInstanceLayerProperties(&layer_count, available_layers);
 
@@ -100,16 +99,14 @@ uint32_t check_validation_layer_support(void)
 }
 
 void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT *debug_messenger) {
-    if(!enable_validation_layers)
-    {
+    if(!enable_validation_layers) {
         return;
     }
     
     VkDebugUtilsMessengerCreateInfoEXT create_info = {0};
     populate_debug_messenger_create_info(&create_info);
 
-    if (create_debug_utils_messenger_EXT(instance, &create_info, NULL, debug_messenger) != VK_SUCCESS)
-    {
+    if (create_debug_utils_messenger_EXT(instance, &create_info, NULL, debug_messenger) != VK_SUCCESS) {
         perror("failed to set up debug messenger!");
     }
 }
