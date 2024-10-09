@@ -8,8 +8,8 @@
 #include "window.h"
 
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 800;
+const uint32_t WIDTH = 600;
+const uint32_t HEIGHT = 600;
 
 void create_surface(VkSurfaceKHR *surface, VkInstance instance, window_t window) {
     if (glfwCreateWindowSurface(instance, window, NULL, surface) != VK_SUCCESS) {

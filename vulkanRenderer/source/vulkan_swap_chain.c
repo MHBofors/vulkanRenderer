@@ -107,7 +107,7 @@ void create_swap_chain(VkSwapchainKHR *swap_chain, VkDevice device, VkPhysicalDe
     
     queue_family_indices indices = find_queue_families(physical_device);
 
-    if (!(indices.graphics_family == indices.transfer_family) && (indices.graphics_family == indices.compute_family)) {
+    if (!((indices.graphics_family == indices.transfer_family) && (indices.graphics_family == indices.compute_family))) {
         create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;//Several families can use images without transfer of membership
         create_info.queueFamilyIndexCount = 3;
         create_info.pQueueFamilyIndices = (uint32_t *)&indices;

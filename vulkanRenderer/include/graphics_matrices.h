@@ -21,4 +21,12 @@ typedef struct quaternion_t {
     float k;
 } quaternion_t;
 
+typedef struct matrix_t {
+    float array[4][4];
+} matrix_t;
+
+typedef struct transformation_t {
+    float matrix[4][4];
+} transformation_t;
+
 #endif /* graphics_matrices_h */

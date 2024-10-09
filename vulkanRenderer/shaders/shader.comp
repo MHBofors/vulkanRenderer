@@ -1,0 +1,70 @@
+#version 460
+#define MAX_ITER 128
+#define PALLETE_SIZE 3
+#define PI 3.14159
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+layout(rgba32f, set = 0, binding = 0) uniform image2D image;
+layout(push_constant) uniform contants {
+    vec2 z_0;
+};
+
+vec3 palette[PALLETE_SIZE] = {
+    vec3(0.75, 0.05, .05),
+    vec3(0.05, 0.75, .05),
+    vec3(0.05, 0.05, .75)
+};
+
+
+vec2 multiply(vec2 a, vec2 b) {
+    return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
+}
+
+vec2 clog(vec2 a) {
+    float re = 0.5*log(a.x*a.x + a.y*a.y);
+    float im = atan(a.x, a.y);
+
+    if(im > PI) {
+        im -= 2*PI;
+    }
+    return vec2(re, im);
+}
+
+
+
+uint julia_number(vec2 z) {
+    uint iteration = 0;
+    while(z.x*z.x + z.y*z.y < 2.0f && iteration++ < MAX_ITER) {
+        z = multiply(z, z) + z_0;
+    }
+
+    return iteration;
+}
+
+float normalised_iteration_number(uint n) {
+    return mod(pow(float(n)/MAX_ITER*PALLETE_SIZE, 2), PALLETE_SIZE);
+}
+
+vec3 color(float v) {
+    uint m = uint(floor(v));
+    uint n = uint(mod(ceil(v), PALLETE_SIZE));
+    float r = fract(v);
+
+    return (1 - r)*palette[m] + r*palette[n];
+}
+
+float unit_wave(float x) {
+    return (1.0 - cos(x)) * 0.5;
+}
+
+void main() {
+    ivec2 texel_coordinate = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 size = imageSize(image);
+
+    vec2 z = -vec2(float(gl_GlobalInvocationID.x)/(size.x - 1) - 0.5, float(gl_GlobalInvocationID.y)/(size.y - 1) - 0.5);
+    uint m = julia_number(z);
+    float v = normalised_iteration_number(m);
+    imageStore(image, texel_coordinate, vec4(color(v), .5));
+}
+

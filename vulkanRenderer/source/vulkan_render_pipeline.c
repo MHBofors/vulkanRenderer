@@ -51,8 +51,6 @@ void create_render_pass_simple(VkRenderPass *render_pass, VkDevice logical_devic
         .pDependencies = &dependency
     };
     
-    
-    
     if (vkCreateRenderPass(logical_device, &create_info, NULL, render_pass) != VK_SUCCESS) {
         printf("Failed to create render pass\n");
         exit(1);
@@ -71,7 +69,7 @@ void clear_pipeline_details(pipeline_details_t *pipeline_details) {
         .depth_stencil  = {.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO},
         .color_blender  = {.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO},
         .dynamic_state  = {.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO},
-        .layout         = {.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO}
+        .layout         = {0}
     };
 }
 
@@ -126,11 +124,7 @@ void set_depth_test_none(pipeline_details_t *pipeline_details) {
     pipeline_details->depth_stencil.maxDepthBounds = 1.0f;
 }
 
-void create_graphics_pipeline(VkPipeline *graphics_pipeline, VkPipelineLayout *pipeline_layout, VkDevice logical_device, VkRenderPass render_pass, pipeline_details_t *pipeline_details) {
-    if(vkCreatePipelineLayout(logical_device, &pipeline_details->layout, NULL, pipeline_layout) != VK_SUCCESS) {
-        error(1, "Failed to create pipeline layout\n");
-    }
-
+void create_graphics_pipeline(VkPipeline *graphics_pipeline, VkDevice logical_device, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, pipeline_details_t *pipeline_details) {
     VkGraphicsPipelineCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .stageCount = pipeline_details->stage_count,
@@ -143,7 +137,7 @@ void create_graphics_pipeline(VkPipeline *graphics_pipeline, VkPipelineLayout *p
         .pDepthStencilState = &pipeline_details->depth_stencil,
         .pColorBlendState = &pipeline_details->color_blender,
         .pDynamicState = &pipeline_details->dynamic_state,
-        .layout = *pipeline_layout,
+        .layout = pipeline_layout,
         .renderPass = render_pass,
         .subpass = 0,
         /* Used if pipeline is recreated */

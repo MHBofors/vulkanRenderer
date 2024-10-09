@@ -4,8 +4,9 @@ SRC_DIR = source
 INCLUDE_DIR = include
 BUILD_DIR = build
 BIN_DIR = bin
+SHADER_DIR = shaders
 
-CFLAGS = -std=c17 -O2 -I./$(INCLUDE_DIR)
+CFLAGS = -std=c17 -g -Wall -O2 -I./$(INCLUDE_DIR)
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lm -lSDL2
 
 # Source files
@@ -33,14 +34,10 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 clean:
 	rm -rf $(BUILD_DIR) $(BIN_DIR)
 
-shaders/%.spv: shaders/shader.%
-	glslc ./shaders/shader.% -o ./shaders/%.spv
-
-shaders: ./shaders/shader.vert ./shaders/shader.frag
-	glslc ./shaders/shader.vert -o ./shaders/vert.spv
-	glslc ./shaders/shader.frag -o ./shaders/frag.spv
-
 test: all
 	./$(EXECUTABLE)
 
-.PHONY: all clean shaders test
+debug: all
+	gdb ./$(EXECUTABLE)
+
+.PHONY: all clean shaders test shaders

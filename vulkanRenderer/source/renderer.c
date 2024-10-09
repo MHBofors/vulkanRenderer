@@ -71,12 +71,24 @@ void recreate_swap_resources(swap_resources_t *swap_resources, vulkan_context_t 
 
     setup_swap_resources(swap_resources, context, device, window);
     for(uint32_t i = 0; i < swap_resources->image_count; i++) {
-        create_frame_buffer(swap_resources->framebuffers + i, device->logical_device, render_pipeline->render_pass, 1, &swap_resources->image_views[i], swap_resources->extent);
+        create_framebuffer(swap_resources->framebuffers + i, device->logical_device, render_pipeline->render_pass, 1, &swap_resources->image_views[i], swap_resources->extent);
     }
 }
 
 void setup_render_pipeline_simple(render_pipeline_t *render_pipeline, device_context_t device_context, swap_resources_t swap_resources) {
     create_render_pass_simple(&render_pipeline->render_pass, device_context.logical_device, swap_resources.image_format);
+
+    VkPipelineLayoutCreateInfo layout_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = 0,
+        .pSetLayouts = NULL,
+        .pushConstantRangeCount = 0,
+        .pPushConstantRanges = NULL
+    };
+
+    if(vkCreatePipelineLayout(device_context.logical_device, &layout_create_info, NULL, &render_pipeline->pipeline_layout) != VK_SUCCESS) {
+        error(1, "Failed to create pipeline layout\n");
+    }
 
     VkShaderModule vertex_shader;
     VkShaderModule fragment_shader;
@@ -104,12 +116,9 @@ void setup_render_pipeline_simple(render_pipeline_t *render_pipeline, device_con
 
     pipeline_details_t details;
     VkPipelineColorBlendAttachmentState blend_attachment;
-    details.layout.setLayoutCount = 0;
-    details.layout.pSetLayouts = NULL;
-    details.layout.pushConstantRangeCount = 0;
-    details.layout.pPushConstantRanges = NULL;
 
     clear_pipeline_details(&details);
+
     set_input_topology(&details, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
     set_polygon_mode(&details, VK_POLYGON_MODE_FILL);
     set_cull_mode(&details, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
@@ -127,13 +136,14 @@ void setup_render_pipeline_simple(render_pipeline_t *render_pipeline, device_con
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
-    VkVertexInputAttributeDescription attribute_description[2];
+    VkVertexInputAttributeDescription attribute_description[3];
     attribute_description[0] = (VkVertexInputAttributeDescription){
         .binding = 0,
         .location = 0,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = offsetof(vertex_t, position)
     };
+
     attribute_description[1] = (VkVertexInputAttributeDescription){
         .binding = 0,
         .location = 1,
@@ -141,9 +151,16 @@ void setup_render_pipeline_simple(render_pipeline_t *render_pipeline, device_con
         .offset = offsetof(vertex_t, color)
     };
 
+    attribute_description[2] = (VkVertexInputAttributeDescription){
+        .binding = 0,
+        .location = 2,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(vertex_t, texture_coordinates)
+    };
+
     details.vertex_input.vertexBindingDescriptionCount = 1;
     details.vertex_input.pVertexBindingDescriptions = &binding_description;
-    details.vertex_input.vertexAttributeDescriptionCount = 2;
+    details.vertex_input.vertexAttributeDescriptionCount = 3;
     details.vertex_input.pVertexAttributeDescriptions = attribute_description;
 
     VkDynamicState dynamic_state[2] = {
@@ -174,7 +191,7 @@ void setup_render_pipeline_simple(render_pipeline_t *render_pipeline, device_con
     details.viewport.scissorCount = 1;
     details.viewport.pScissors = &scissor;
 
-    create_graphics_pipeline(&render_pipeline->graphics_pipeline, &render_pipeline->pipeline_layout, device_context.logical_device, render_pipeline->render_pass, &details);
+    create_graphics_pipeline(&render_pipeline->graphics_pipeline, device_context.logical_device, render_pipeline->pipeline_layout, render_pipeline->render_pass, &details);
 
     vkDestroyShaderModule(device_context.logical_device, vertex_shader, NULL);
     vkDestroyShaderModule(device_context.logical_device, fragment_shader, NULL);
@@ -316,7 +333,7 @@ void end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_queue
     VkSemaphore wait_semaphore[] = {frame->image_available_semaphore};
     VkSemaphore signal_semaphore[] = {frame->render_finished_semaphore};
     VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
+    
     VkSubmitInfo submit_info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .waitSemaphoreCount = 1,

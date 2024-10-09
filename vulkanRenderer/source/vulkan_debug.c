@@ -107,6 +107,6 @@ void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT *debug_
     populate_debug_messenger_create_info(&create_info);
 
     if (create_debug_utils_messenger_EXT(instance, &create_info, NULL, debug_messenger) != VK_SUCCESS) {
-        perror("failed to set up debug messenger!");
+        perror("Failed to set up debug messenger!");
     }
 }

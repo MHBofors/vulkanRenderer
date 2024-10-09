@@ -9,27 +9,22 @@
 #include "vulkan_command_buffers.h"
 
 typedef struct {
-    float x;
-    float y;
-    float z;
+    float x, y, z;
 } vector_t;
 
 typedef struct {
-    float r;
-    float g;
-    float b;
-    float alpha;
+    float r, g, b, alpha;
 } color_t;
+
+typedef struct {
+    float u, v;
+} texture_coordinates_t;
 
 typedef struct {
     vector_t position;
     color_t color;
+    texture_coordinates_t texture_coordinates;
 } vertex_t;
-
-typedef struct {
-    vertex_t vertex;
-    float u, v;
-} textured_vertex_t;
 
 typedef struct vulkan_context_t {
     VkInstance instance;
@@ -100,6 +95,8 @@ typedef struct renderer_t {
     uint32_t frame_count;
     frame_t *frames;
 } renderer_t;
+
+
 
 void setup_context(vulkan_context_t *context, window_t window);
 

@@ -90,8 +90,8 @@ quaternion_t quaternion_product(quaternion_t p, quaternion_t q) {
 }
 
 quaternion_t quaternion_rotation(float angle, quaternion_t q) {
-    float cosine = cos(angle/2);
-    float sine = sin(angle/2);
+    float cosine = cos(angle*0.5);
+    float sine = sin(angle*0.5);
     
     float inverse_norm = 1/sqrt(q.i*q.i + q.j*q.j + q.k*q.k);
 
@@ -105,4 +105,37 @@ quaternion_t quaternion_rotation(float angle, quaternion_t q) {
 
 quaternion_t vector_division(quaternion_t p, quaternion_t q) {
     quaternion_t axis = {};
+}
+
+matrix_t matrix_product(matrix_t A, matrix_t B) {
+    matrix_t r;
+
+    for(uint8_t i = 0; i < 4; i++) {
+        for (uint8_t j = 0; j < 4; j++) {
+            r.array[i][j] = A.array[i][0]*B.array[0][j]
+                          + A.array[i][1]*B.array[1][j]
+                          + A.array[i][2]*B.array[2][j]
+                          + A.array[i][3]*B.array[3][j];
+        }
+    }
+
+    return r;
+}
+
+matrix_t identity_matrix() {
+    return (matrix_t) {
+        {{1.0, 0.0, 0.0, 0.0},
+         {0.0, 1.0, 0.0, 0.0},
+         {0.0, 0.0, 1.0, 0.0},
+         {0.0, 0.0, 0.0, 1.0}}
+    };
+}
+
+matrix_t translation_matrix() {
+    return (matrix_t) {
+        {{1.0, 0.0, 0.0, 0.0},
+         {0.0, 1.0, 0.0, 0.0},
+         {0.0, 0.0, 1.0, 0.0},
+         {0.0, 0.0, 0.0, 1.0}}
+    };
 }

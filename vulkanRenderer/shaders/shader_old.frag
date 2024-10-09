@@ -16,5 +16,8 @@ float Y = gl_FragCoord.y/800 - 1.0;
 float pi = 3.14159;
 
 void main() {
-    out_color = vec4(texture(sampler2D(texture_image, texture_sampler), uv));
+    out_color = vec4(frag_color * texture(sampler2D(texture_image, texture_sampler), uv));
+    out_color.x *= (sin(37*pi*(X*X-Y*Y-X*Y)) + 1)/2;
+    out_color.y *= (sin(11*pi*(1/(exp(X*X-Y)))) + 1)/2;
+    out_color.z *= (sin(13*pi*1/(0.1+X*X+Y*Y)) + 1)/2;
 }

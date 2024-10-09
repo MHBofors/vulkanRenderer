@@ -24,7 +24,7 @@ typedef struct pipeline_details_t {
     VkPipelineDepthStencilStateCreateInfo depth_stencil;
     VkPipelineColorBlendStateCreateInfo color_blender;
     VkPipelineDynamicStateCreateInfo dynamic_state;
-    VkPipelineLayoutCreateInfo layout;
+    VkPipelineLayout layout;
 } pipeline_details_t;
 
 void create_render_pass(VkRenderPass *render_pass, uint32_t attachment_count, VkAttachmentDescription *attachment_descriptions, VkSubpassDescription *sub_pass);
@@ -47,6 +47,6 @@ void set_blend_attachment_none(VkPipelineColorBlendAttachmentState *color_blend_
 
 void set_depth_test_none(pipeline_details_t *pipeline_details);
 
-void create_graphics_pipeline(VkPipeline *graphics_pipeline, VkPipelineLayout *pipeline_layout, VkDevice logical_device, VkRenderPass render_pass, pipeline_details_t *pipeline_details);
+void create_graphics_pipeline(VkPipeline *graphics_pipeline, VkDevice logical_device, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, pipeline_details_t *pipeline_details);
 
 #endif /* vulkan_render_pipeline_h */

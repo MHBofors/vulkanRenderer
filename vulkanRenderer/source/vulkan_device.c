@@ -7,8 +7,8 @@
 
 #include "vulkan_device.h"
 
-const char required_device_extension_count = 1;
-const char *required_device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+const char required_device_extension_count = 2;
+const char *required_device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_synchronization2"};
 
 enum queue_family_flag_bits{GRAPHICS_FAMILY_BIT, PRESENT_FAMILY_BIT, QUEUE_FAMILY_FLAG_COUNT};
 

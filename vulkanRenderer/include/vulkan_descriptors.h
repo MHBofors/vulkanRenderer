@@ -7,6 +7,6 @@
 #include <vulkan/vulkan.h>
 #include "vulkan_utils.h"
 
-
+typedef struct descriptor_manager_t descriptor_manager_t;
 
 #endif /* vulkan_descriptors_h */
