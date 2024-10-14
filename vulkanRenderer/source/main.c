@@ -308,8 +308,10 @@ int main(int argc, const char * argv[]) {
     create_compute_pipeline_layout(&compute_pipeline_layout, device.logical_device, image_layout);
     create_compute_pipeline(&compute_pipeline, compute_pipeline_layout, device.logical_device, "shaders/compute.spv");
 
+    uint32_t texture_size = 144*8;
+
     for(uint32_t i = 0; i < frames_in_flight; i++) {
-        create_image(&fractal_images[i].image, &fractal_images[i].memory, device.logical_device, device.physical_device, 1024, 1024, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD);
+        create_image(&fractal_images[i].image, &fractal_images[i].memory, device.logical_device, device.physical_device, texture_size, texture_size, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD);
         create_image_view(fractal_image_views + i, fractal_images[i].image, device.logical_device, 1, VK_FORMAT_R32G32B32A32_SFLOAT);
         
         create_buffer(&uniform_buffers[i], &uniform_buffers[i].memory, device.logical_device, device.physical_device, (VkDeviceSize)3*sizeof(float[4][4]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -555,12 +557,15 @@ int main(int argc, const char * argv[]) {
     uint32_t frame_index = 0;
 
     clock_t time_start = clock();
-    
+    float t_0 = 0;
+    float t = 0;
+    float s = 0;
     frame_t *frame;
     VkCommandBuffer command_buffer;
     while(!window_should_close(window)) {
         glfwPollEvents();
-        float t = (float)(clock() - time_start)/CLOCKS_PER_SEC;
+        t_0 = t;
+        t = (float)(clock() - time_start)/CLOCKS_PER_SEC;
 
         frame = frames + frame_index;
         command_buffer = frame->command_buffer;
@@ -585,17 +590,17 @@ int main(int argc, const char * argv[]) {
         vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute_pipeline_layout, 0, 1, &compute_descriptor_sets[frame_index], 0, NULL);
         
 
-        t *= 0.0625;
+        s = t*0.00625;
         //t *= 0.125;
-        float z[2] = {(cos(t) - cos(2.00*t)*0.5)*0.5, (sin(t) - sin(2.00*t)*0.5)*0.5};
-        z[0] *= 1.0 + 0.01;
-        z[1] *= 1.0 + 0.01;
+        float z[3] = {(cos(s) - cos(2.00*s)*0.5)*0.5, (sin(s) - sin(2.00*s)*0.5)*0.5, t};
+        z[0] *= 1.0 + 0.0004;
+        z[1] *= 1.0 + 0.0004;
         
 
         
         //float z[2] = {(cos(t) - cos(2.0*t)*0.5)*0.5+0.00625*cos(0.125*t), (sin(t) - sin(2.0*t)*0.5+0.00625*sin(0.125*t))*0.5};
-        vkCmdPushConstants(command_buffer, compute_pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, 8, z);
-        vkCmdDispatch(command_buffer, 64, 64, 1);
+        vkCmdPushConstants(command_buffer, compute_pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, 12, z);
+        vkCmdDispatch(command_buffer, 144, 144, 1);
 
         vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, &compute_pipeline_barriers[frame_index][1]);
 
