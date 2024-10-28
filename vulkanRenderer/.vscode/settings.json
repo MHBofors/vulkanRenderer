@@ -14,5 +14,6 @@
         "sdl_video.h": "c",
         "begin_code.h": "c",
         "sdl_system.h": "c"
-    }
+    },
+    "makefile.configureOnOpen": true
 }

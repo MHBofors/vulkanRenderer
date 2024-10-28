@@ -1,11 +1,13 @@
 #version 460
-#define MAX_ITER 256
+#define MAX_ITER 128
 #define PALLETE_SIZE 3
 #define PI 3.14159
+#define PHI 1.618033988
 #define R_SQUARED 1e15
+#define MAX(a,b) (a < b ? b : a)
+#define MIN(a,b) (a < b ? a : b)
 
-
-layout(local_size_x = 8, local_size_y = 8) in;
+layout(local_size_x = 32, local_size_y = 32) in;
 
 layout(rgba32f, set = 0, binding = 0) uniform image2D image;
 layout(push_constant) uniform contants {
@@ -15,10 +17,21 @@ layout(push_constant) uniform contants {
 
 vec3 palette[PALLETE_SIZE] = {
     vec3(0.75, 0.075, .075),
-    vec3(0.075, 0.75, .075),
+    vec3(0.275, 0.65, .075),
     vec3(0.075, 0.075, .75)
 };
 
+/*
+vec3 cross(vec3 u, vec3 v) {
+    return vec3(u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x);
+}
+*/
+
+vec3 renorm(vec3 X, uint n) {
+    vec3 X_new = vec3(pow(X.x, n), pow(X.y, n), pow(X.z, n));
+    float norm = pow(X_new.x*X_new.x + X_new.y*X_new.y + X_new.z*X_new.z, 1/float(2*n));
+    return X_new/norm;
+}
 
 vec2 multiply(vec2 a, vec2 b) {
     return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
@@ -50,6 +63,14 @@ uint julia3_number(vec2 z) {
     }
 
     return iteration;
+}
+
+float f(float x) {
+    return (1.0 - cos(PI*MAX(0.0, MIN(1.0, x))))*0.5;
+}
+
+float g(float x, float a, float b) {
+    return f(x/a)*f(((b+a) - x)/b);
 }
 
 float d(vec2 z_0) {
@@ -90,33 +111,51 @@ float normalised_iteration_number(uint n) {
     return mod(pow(float(n)/MAX_ITER*PALLETE_SIZE, 2), PALLETE_SIZE);
 }
 
+float unit_wave(float x) {
+    return (1.0 - sin(x)) * 0.5;
+}
+
 vec3 color(float v) {
+    v *= 0.25;
     v += t;
     uint m = uint(mod(floor(v), PALLETE_SIZE));
     uint n = uint(mod(ceil(v), PALLETE_SIZE));
     float r = fract(v);
 
-    return (1 - r)*palette[m] + r*palette[n];
+    //return (1 - r)*palette[m] + r*palette[n];
+    //vec3 color1 = vec3(unit_wave(v), unit_wave(PHI*v + 1), unit_wave((PHI + 1)*v + 2));
+    vec3 color = (1 - r)*palette[m] + r*palette[n];
+    return color;
 }
 
-float unit_wave(float x) {
-    return (1.0 - sin(x)) * 0.5;
+vec3 color_alt(float v) {
+    v *= v;
+    float red = (1+unit_wave(0.5*v + 3*t + 1))*0.5;
+    red = (1+4.0*pow(g(mod(-(v+4*t), 4 + 1), 4, 1), 1))*0.2;
+    float green = unit_wave(v - 5*t + 2)*0.15;
+    green = (pow(g(mod(-(v+2*PHI*t), 10 + 1), 10, 1), 1))*0.2;
+    float blue = (1+unit_wave(v + 11*t + 3))*0.25;
+    blue = (1+2*pow(g(mod(-(v+4*PI*t), 12 + 1), 12, 1), 1))*0.2;
+
+    vec3 color = vec3(red, green, blue);
+    return color;
 }
 
 void main() {
     ivec2 texel_coordinate = ivec2(gl_GlobalInvocationID.xy);
 	ivec2 size = imageSize(image);
 
-    vec2 z = -2.82*vec2(float(gl_GlobalInvocationID.x)*0.00086805555 - 0.5, float(gl_GlobalInvocationID.y)*0.00086805555 - 0.5);
+    vec2 z = -2.82*vec2(float(gl_GlobalInvocationID.x)/size.x - 0.5, float(gl_GlobalInvocationID.y)/size.y - 0.5);
+
     //uint m = julia2_number(z);
     //float v = normalised_iteration_number(m);
     float v = d(z);
-    
     if(v > 0) {
         imageStore(image, texel_coordinate, vec4(color(-log(v)), 1));
     } else {
         //float r = length(z);
         //imageStore(image, texel_coordinate, vec4(0.0, 0.0, 0.0, 1.0));
-        imageStore(image, texel_coordinate, vec4((unit_wave(z.x + t) + unit_wave(z.y + 2*t))/2, (unit_wave(z.x + 3*t + 1) + unit_wave(z.y + t))/2, (unit_wave(z.x + 3*t) + unit_wave(z.y + 2*t + 3))/2, 1.0));
+        vec4 color_gradient = vec4((unit_wave(z.x + t) + unit_wave(z.y + 2*t))/2, (unit_wave(z.x + 3*t + 1) + unit_wave(z.y + t))/2, (unit_wave(z.x + 3*t) + unit_wave(z.y + 2*t + 3))/2, 1.0);
+        imageStore(image, texel_coordinate, color_gradient);
     }
 }
