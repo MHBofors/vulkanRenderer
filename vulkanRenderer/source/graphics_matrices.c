@@ -102,11 +102,11 @@ quaternion_t quaternion_rotation(float angle, quaternion_t q) {
         .k = sine*q.k*inverse_norm
     };
 }
-
+/*
 quaternion_t vector_division(quaternion_t p, quaternion_t q) {
     quaternion_t axis = {};
 }
-
+*/
 matrix_t matrix_product(matrix_t A, matrix_t B) {
     matrix_t r;
 
