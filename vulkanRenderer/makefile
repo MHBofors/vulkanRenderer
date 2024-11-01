@@ -7,14 +7,14 @@ BIN_DIR = bin
 SHADER_DIR = shaders
 
 CFLAGS = -std=c17 -g -Wall -O2 -I./$(INCLUDE_DIR)
-LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lm -lSDL2
+LDFLAGS = -lglfw3 -lvulkan-1 -lpthread -lm
 
 # Source files
 SRC_FILES = $(wildcard $(SRC_DIR)/*.c)
 OBJ_FILES = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC_FILES))
 
 # Executable name
-EXECUTABLE = $(BIN_DIR)/vulkan_app
+EXECUTABLE = $(BIN_DIR)/vulkan_app.exe
 
 # Targets
 all: $(BUILD_DIR) $(BIN_DIR) $(EXECUTABLE) shaders
@@ -26,7 +26,7 @@ $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
 $(EXECUTABLE): $(OBJ_FILES)
-	$(CC) $(OBJ_FILES) -o $(EXECUTABLE) $(LDFLAGS) -rpath /usr/local/lib
+	$(CC) $(OBJ_FILES) -o $(EXECUTABLE) $(LDFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@

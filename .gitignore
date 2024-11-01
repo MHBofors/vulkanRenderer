@@ -7,3 +7,9 @@ vulkanRenderer/bin/vulkan_app
 vulkanRenderer/bin/vulkan_app
 vulkanRenderer/shaders/compute.spv
 vulkanRenderer/shaders/frag.spv
+vulkanRenderer/.vscode/c_cpp_properties.json
+vulkanRenderer/.vscode/launch.json
+vulkanRenderer/.vscode/settings.json
+vulkanRenderer/bin/vulkan_app.exe
+vulkanRenderer/makefile
+vulkanRenderer/shaders/compute.spv
