@@ -590,15 +590,16 @@ int main(int argc, const char * argv[]) {
         vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute_pipeline_layout, 0, 1, &compute_descriptor_sets[frame_index], 0, NULL);
         
 
-        s = t*0.0125;
+        s = t*0.125;
         float d;
         d = 0.75f;
-        //d = 1/6.0f;
+        d = 1/6.0f;
         //t *= 0.125;
         //float z[3] = {(cos(s) - cos(2.00*s)*0.5)*0.5, (sin(s) - sin(2.00*s)*0.5)*0.5, 0*0.25*t};
-        float z[3] = {(cos(s) + cos(6.00*s)*d)*0.5, (sin(s) + sin(6.00*s)*d)*0.5, 0.125*t};
-        z[0] *= 1.0 + 0.250000;
-        z[1] *= 1.0 + 0.250000;
+        //float z[3] = {(cos(s) - cos(6.00*s)*d)*0.5, (sin(s) - sin(6.00*s)*d)*0.5, 0.25*t};
+        float z[3] = {cos(s) + 2.0*cos(-4.00*s), sin(s) + 2.0*sin(-4.00*s), 0.125*t};
+        z[0] *= 0.75;
+        z[1] *= 0.75;
 
         
         //float z[2] = {(cos(t) - cos(2.0*t)*0.5)*0.5+0.00625*cos(0.125*t), (sin(t) - sin(2.0*t)*0.5+0.00625*sin(0.125*t))*0.5};

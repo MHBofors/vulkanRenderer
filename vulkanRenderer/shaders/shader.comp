@@ -1,7 +1,7 @@
 #version 460
 #define MAX_ITER 2048
 #define PALLETE_SIZE 3
-#define PI 3.14159
+#define PI (3.1415926535897932384626433832795)
 #define PHI 1.618033988
 #define R_SQUARED 1e15
 #define MAX(a,b) (a < b ? b : a)
@@ -19,10 +19,11 @@ layout(push_constant) uniform contants {
     float t;
 };
 
-vec3 palette[PALLETE_SIZE] = {
+vec3 palette[PALLETE_SIZE + 1] = {
     vec3(.95, .075, .075),
-    vec3(.075, .35, .075),
-    vec3(.075, .075, .75)
+    vec3(.075, .75, .075),
+    vec3(.075, .075, .75),
+    vec3(.95, .075, .075),
 };
 
 /*
@@ -42,13 +43,12 @@ vec3 renorm(vec3 X, uint n) {
     return X_new/norm;
 }
 
-vec2 multiply(vec2 a, vec2 b) {
+vec2 cmult(vec2 a, vec2 b) {
     return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
 }
 
 vec2 cdiv(vec2 a, vec2 b) {
-    float divisor = 1/(b.x*b.x + b.y*b.y);
-    return vec2(a.x*b.x + a.y*b.y, a.y*b.x - a.x*b.y)*divisor;
+    return vec2(a.x*b.x + a.y*b.y, a.y*b.x - a.x*b.y)/(b.x*b.x + b.y*b.y);
 }
 
 vec2 clog(vec2 a) {
@@ -63,6 +63,14 @@ vec2 clog(vec2 a) {
 
 vec2 cexp(vec2 z) {
     return exp(z.x)*vec2(cos(z.y), sin(z.y));
+}
+
+vec2 csin(vec2 z) {
+    return vec2(sin(z.x)*cosh(z.y), cos(z.x)*sinh(z.y));
+}
+
+vec2 ccos(vec2 z) {
+    return vec2(cos(z.x)*cosh(z.y), -sin(z.x)*sinh(z.y));
 }
 
 vec2 cpow(vec2 z, float x) {
@@ -96,6 +104,8 @@ float d(vec2 z_0) {
     return sqrt(m_squared/d_squared)*0.5*log(m_squared);
 }
 
+
+
 uint julia_number(vec2 z) {
     uint iteration = 0;
     while(z.x*z.x + z.y*z.y < 2048.0f && iteration++ < MAX_ITER) {
@@ -119,7 +129,7 @@ uint julia2_number(vec2 z) {
 
 uint julia3_number(vec2 z) {
     uint iteration = 0;
-    while(z.x*z.x + z.y*z.y < 16.0f && iteration++ < MAX_ITER) {
+    while(z.x*z.x + z.y*z.y < 4056.0f && iteration++ < MAX_ITER) {
         vec2 z_squared = product(z, z);
         vec2 z_cubed = product(z_squared, z);
         vec2 z_quint = product(z_squared, z_cubed);
@@ -133,26 +143,28 @@ uint julia3_number(vec2 z) {
 
 uint julia5_number(vec2 z) {
     uint iteration = 0;
-    while(z.x*z.x + z.y*z.y < 2048.0f && iteration++ < MAX_ITER) {
-        z = vec2(z.x*z.x*z.x - 3*z.x*z.y*z.y, 3*z.x*z.x*z.y - z.y*z.y*z.y) - 0.1*(1-unit_wave(t))*cdiv(c, vec2((z.x*z.x - z.y*z.y), (2*z.x*z.y))) + unit_wave(t)*c;
+    while(z.x*z.x + z.y*z.y < 4096.0f && iteration++ < MAX_ITER) {
+        z = csin(z + c);
+        //vec2 z_squared = product(z, z);
+        //vec2 z_cubed = product(z_squared, z);
+        //vec2 z_quint = product(z_squared, z_cubed);
     }
 
     return iteration;
 }
 
-uint julia4_number(vec2 z) {
+vec2 julia4_number(vec2 z) {
     uint iteration = 0;
-    while(z.x*z.x + z.y*z.y < 2048.0f && iteration++ < MAX_ITER) {
-        z = vec2((z.x*z.x - z.y*z.y), (2*z.x*z.y)) - 0.05*cdiv(vec2(1, -2), vec2((z.x*z.x - z.y*z.y), (2*z.x*z.y))) + c;
+    while(z.x*z.x + z.y*z.y < float(1<<30) && iteration++ < 1<<3) {
+        z = cexp(z) + c;
     }
 
-    return iteration;
+    return z;
 }
 
 float normalised_iteration_number(uint n) {
-    return mod(pow(float(n)/MAX_ITER*PALLETE_SIZE, 0.25), PALLETE_SIZE);
+    return mod(pow(pow(float(n)/float(MAX_ITER), 0.2)*PALLETE_SIZE, 1.5), PALLETE_SIZE);
 }
-
 
 vec3 color(float v) {
     v += t;
@@ -167,7 +179,59 @@ vec3 color(float v) {
 }
 
 vec3 color_alt(float v) {
-    v *= v;
+    uint m = uint(mod(floor(v), PALLETE_SIZE));
+    uint n = uint(mod(ceil(v), PALLETE_SIZE));
+    float r = fract(v);
+
+    //return (1 - r)*palette[m] + r*palette[n];
+    //vec3 color1 = vec3(unit_wave(v), unit_wave(PHI*v + 1), unit_wave((PHI + 1)*v + 2));
+    vec3 color = (1 - r)*palette[m] + r*palette[n];
+    return color;
+}
+
+vec3 ccolor(vec2 z) {
+    float re = z.x;
+    float im = z.y;
+    float q = 2.0*PI/3.0;
+    float theta = atan(re, im);
+    
+    float u = fract(re);
+    float v = fract(im);
+
+    float r = 8.0*u*v*(1.0 - u)*(1.0 - v);
+    vec3 color = r*vec3(unit_wave(theta), unit_wave(theta + q), unit_wave(theta + 2.0*q));
+
+    return color;
+}
+
+vec3 ccolor2(vec2 z) {
+    float re = z.x;
+    float im = z.y;
+    float q = 2.0*PI/3.0;
+    float theta = atan(re, im);
+    
+    float r = fract(length(z));
+
+    r = 4.0*r*(1.0 - r);
+    vec3 color = r*vec3(unit_wave(theta), unit_wave(theta + q), unit_wave(theta + 2.0*q));
+
+    return color;
+}
+
+vec3 ccolor3(vec2 z) {
+    float re = z.x;
+    float im = z.y;
+    float r = length(z);
+    uint m = uint(mod(floor(r), PALLETE_SIZE));
+    float s = fract(r);
+
+    vec3 color = (1 - s)*palette[m] + s*palette[m + 1];
+    return color;
+}
+
+/*
+vec3 color_alt2(float v) {
+    v += t;
     float red = (1+unit_wave(0.5*v + 3*t + 1))*0.5;
     red = (1+4.0*pow(g(mod(-(v+4*t), 4 + 1), 4, 1), 1))*0.2;
     float green = unit_wave(v - 5*t + 2)*0.15;
@@ -178,6 +242,26 @@ vec3 color_alt(float v) {
     vec3 color = vec3(red, green, blue);
     return color;
 }
+*/
+
+vec3 color_gradient(vec2 z, float t) {
+    return vec3((unit_wave(z.x + t) + unit_wave(z.y + 2*t))/2, (unit_wave(z.x + 3*t + 1) + unit_wave(z.y + t))/2, (unit_wave(z.x + 3*t) + unit_wave(z.y + 2*t + 3))/2);
+}
+
+/*
+vec3 dem_j(vec2 z, float t) {
+    float v = d(z);
+    
+    if(v > 0) {
+        imageStore(image, texel_coordinate, vec4(color(-log(v)), 1));
+    } else {
+        //float r = length(z);
+        //imageStore(image, texel_coordinate, vec4(0.0, 0.0, 0.0, 1.0));
+        vec4 color_gradient = vec4(color_gradient(z, t), 1.0);
+        imageStore(image, texel_coordinate, color_gradient);
+    }
+}
+*/
 
 void main() {
     ivec2 texel_coordinate = ivec2(gl_GlobalInvocationID.xy);
@@ -187,11 +271,11 @@ void main() {
 
     vec2 z = -vec2(aspect_ratio*(float(gl_GlobalInvocationID.x)/float(size.x) - 0.5), float(gl_GlobalInvocationID.y)/float(size.y) - 0.5);
     z *= 2.82;
-    //z *= 5.25;
+    z *= 5.25;
     //z.x -= 0.5;
     //z.y += 0.00125;
 
-    uint m = julia3_number(z);
+    uint m = julia5_number(z);
     float v = normalised_iteration_number(m);
     //float v = d(z);
     if(v > 0) {
@@ -199,14 +283,22 @@ void main() {
     } else {
         //float r = length(z);
         //imageStore(image, texel_coordinate, vec4(0.0, 0.0, 0.0, 1.0));
-        vec4 color_gradient = vec4((unit_wave(z.x + t) + unit_wave(z.y + 2*t))/2, (unit_wave(z.x + 3*t + 1) + unit_wave(z.y + t))/2, (unit_wave(z.x + 3*t) + unit_wave(z.y + 2*t + 3))/2, 1.0);
+        vec4 color_gradient = vec4(color_gradient(z, t), 1.0);
         imageStore(image, texel_coordinate, color_gradient);
     }
 
     if(m >= MAX_ITER-1) {
-        vec4 color_gradient = vec4((unit_wave(z.x + t) + unit_wave(z.y + 2*t))/2, (unit_wave(z.x + 3*t + 1) + unit_wave(z.y + t))/2, (unit_wave(z.x + 3*t) + unit_wave(z.y + 2*t + 3))/2, 1.0);
+        vec4 color_gradient = vec4(color_gradient(z, t), 1.0);
         imageStore(image, texel_coordinate, color_gradient);
     } else {
-        imageStore(image, texel_coordinate, vec4(color(log(v)), 1));
+        imageStore(image, texel_coordinate, vec4(color_alt(t-log(v)), 1));
+    }
+    vec4 color_gradient = vec4(color_gradient(z, t), 1.0);
+    
+    z = julia4_number(z);
+    if(z.x*z.x + z.y*z.y > 4096.0) {
+        imageStore(image, texel_coordinate, color_gradient);
+    } else {
+        imageStore(image, texel_coordinate, vec4(ccolor(z), 1));
     }
 }
