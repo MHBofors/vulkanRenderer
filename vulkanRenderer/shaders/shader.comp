@@ -1,5 +1,5 @@
 #version 460
-#define MAX_ITER 128
+#define MAX_ITER 256
 #define PALLETE_SIZE 3
 #define PI 3.14159
 #define PHI 1.618033988
@@ -17,7 +17,7 @@ layout(push_constant) uniform contants {
 
 vec3 palette[PALLETE_SIZE] = {
     vec3(0.75, 0.075, .075),
-    vec3(0.275, 0.65, .075),
+    vec3(0.25, 0.05, .25),
     vec3(0.075, 0.075, .75)
 };
 
@@ -144,9 +144,11 @@ vec3 color_alt(float v) {
 void main() {
     ivec2 texel_coordinate = ivec2(gl_GlobalInvocationID.xy);
 	ivec2 size = imageSize(image);
+    float aspect = float(size.x)/float(size.y);
 
     vec2 z = -2.82*vec2(float(gl_GlobalInvocationID.x)/size.x - 0.5, float(gl_GlobalInvocationID.y)/size.y - 0.5);
-
+    z.x *= aspect;
+    z *= 0.5;
     //uint m = julia2_number(z);
     //float v = normalised_iteration_number(m);
     float v = d(z);
