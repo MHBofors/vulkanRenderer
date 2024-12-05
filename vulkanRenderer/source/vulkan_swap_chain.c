@@ -85,14 +85,17 @@ VkPresentModeKHR choose_swap_present_mode(VkPhysicalDevice physical_device, VkSu
 
 
 
-void create_swap_chain(VkSwapchainKHR *swap_chain, VkDevice device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, uint32_t image_count, uint32_t image_usage, VkSurfaceFormatKHR surface_format, VkPresentModeKHR present_mode, VkExtent2D image_extent) {
+void create_swap_chain(VkSwapchainKHR *swap_chain, VkDevice device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, uint32_t image_count, VkExtent2D image_extent) {
     VkSurfaceCapabilitiesKHR capabilities;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities);
+
+    VkPresentModeKHR present_mode = choose_swap_present_mode(physical_device, surface);
+    VkSurfaceFormatKHR surface_format = choose_swap_surface_format(physical_device, surface);
     
     VkSwapchainCreateInfoKHR create_info = {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = surface,
-        .imageUsage = image_usage,//Specifies what kinds of operations the images will be used for
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,//Specifies what kinds of operations the images will be used for
         .minImageCount = image_count,
         .imageFormat = surface_format.format,
         .imageColorSpace = surface_format.colorSpace,
@@ -107,7 +110,7 @@ void create_swap_chain(VkSwapchainKHR *swap_chain, VkDevice device, VkPhysicalDe
     
     queue_family_indices indices = find_queue_families(physical_device);
 
-    if (!((indices.graphics_family == indices.transfer_family) && (indices.graphics_family == indices.compute_family))) {
+    if(!((indices.graphics_family == indices.transfer_family) && (indices.graphics_family == indices.compute_family))) {
         create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;//Several families can use images without transfer of membership
         create_info.queueFamilyIndexCount = 3;
         create_info.pQueueFamilyIndices = (uint32_t *)&indices;

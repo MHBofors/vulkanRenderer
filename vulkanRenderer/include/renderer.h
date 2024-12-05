@@ -85,24 +85,42 @@ typedef struct frame_t {
 } frame_t;
 
 typedef struct renderer_t {
-    window_t window;
-    vulkan_context_t vulkan_context;
-    device_context_t device_context;
-    swap_resources_t swap_resources;
-    render_pipeline_t render_pipeline;
-    VkCommandPool command_pool;
-    VkDescriptorPool descriptor_pool;
+    VkInstance instance;
+    VkSurfaceKHR surface;
+    VkDebugUtilsMessengerEXT debug_messenger;
+
+    VkPhysicalDevice physical_device;
+    VkDevice logical_device;
+    device_queues queues;
+
+    VkSwapchainKHR swap_chain;
+    VkExtent2D extent;
+    VkFormat swapchain_image_format;
+    uint32_t swapchain_image_count;
+    VkImage *swapchain_images;
+    VkImageView *swapchain_image_views;
+    VkFramebuffer *framebuffers;
+
     uint32_t frame_count;
     frame_t *frames;
 } renderer_t;
 
+typedef struct engine_t {
+    window_t window;
+    renderer_t renderer;
+} engine_t;
 
+void initialise_renderer(engine_t *engine);
+
+void initialise_swapchain(engine_t *engine);
 
 void setup_context(vulkan_context_t *context, window_t window);
 
 void setup_device_context(device_context_t *device_context, vulkan_context_t *context);
 
 void setup_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *vulkan_context, device_context_t *device_context, window_t window);
+
+void recreate_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *context, device_context_t *device, render_pipeline_t *render_pipeline, window_t window);
 
 void setup_render_pipeline_simple(render_pipeline_t *render_pipeline, device_context_t device_context, swap_resources_t swap_resources);
 
@@ -130,8 +148,8 @@ void clean_up_frames(frame_t *frames, uint32_t frame_count, VkDevice logical_dev
 
 void draw_frame();
 
-uint32_t begin_frame(frame_t *frame, VkDevice logical_device, VkSwapchainKHR swap_chain);
+uint32_t begin_frame(frame_t *frame, VkResult *result, VkDevice logical_device, VkSwapchainKHR swap_chain);
 
-void end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_queue, VkQueue present_queue, uint32_t image_index);
+VkResult end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_queue, VkQueue present_queue, uint32_t image_index);
 
 #endif /* renderer_h */

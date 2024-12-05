@@ -13,7 +13,10 @@
     "sdl_vulkan.h": "c",
     "sdl_video.h": "c",
     "begin_code.h": "c",
-    "sdl_system.h": "c"
+    "sdl_system.h": "c",
+    "cstdint": "c",
+    "type_traits": "c",
+    "random": "c"
   },
   "makefile.configureOnOpen": true,
   "C_Cpp_Runner.cCompilerPath": "gcc",

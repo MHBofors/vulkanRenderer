@@ -16,6 +16,9 @@
 const uint32_t validation_layer_count = 1;
 const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
 
+const uint32_t debug_extension_count = 1;
+const char *debug_extensions[] = {VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
+
 void create_validation_layers(VkInstanceCreateInfo *create_info, VkDebugUtilsMessengerCreateInfoEXT *debug_create_info, dynamic_vector *instance_extension_config) {
     if(enable_validation_layers) {
         populate_debug_messenger_create_info(debug_create_info);
@@ -77,20 +80,17 @@ uint32_t check_validation_layer_support(void)
     VkLayerProperties available_layers[layer_count];
     vkEnumerateInstanceLayerProperties(&layer_count, available_layers);
 
-    for(int i = 0; i < validation_layer_count; i++)
-    {
+    for(int i = 0; i < validation_layer_count; i++) {
         uint32_t check = 0;
-        for(int j = 0; j < layer_count; j++)
-        {
-            if(strcmp(available_layers[j].layerName, validation_layers[i]))
-            {
+
+        for(int j = 0; j < layer_count; j++) {
+            if(strcmp(available_layers[j].layerName, validation_layers[i])) {
                 check = 1;
                 break;
             }
         }
         
-        if(!check)
-        {
+        if(!check) {
             return 0;
         }
     }

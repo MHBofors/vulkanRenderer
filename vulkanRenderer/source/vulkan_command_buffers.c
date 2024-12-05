@@ -15,6 +15,8 @@ void create_primary_command_buffer(VkCommandBuffer *command_buffer, VkDevice log
     }
 }
 
+
+
 void create_secondary_command_buffer(VkCommandBuffer *command_buffer, VkDevice logical_device, VkCommandPool command_pool, uint32_t num_buffers) {
     VkCommandBufferAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -53,6 +55,8 @@ void end_command_buffer(VkCommandBuffer command_buffer) {
 void submit_command_buffer(VkQueue queue, VkCommandBuffer command_buffers) {
 
 }
+
+
 
 void reset_command_pool(VkDevice device, VkCommandPool command_pool) {
 

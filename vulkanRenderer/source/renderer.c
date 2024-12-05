@@ -4,10 +4,11 @@
 
 void setup_context(vulkan_context_t *context, window_t window) {
     dynamic_vector *instance_extension_config = vector_alloc(sizeof(char *));
-    get_window_extension_config(instance_extension_config);
+    get_instance_extensions(extension_count, extensions);
 
     create_instance(&context->instance, instance_extension_config);
     vector_free(instance_extension_config);
+
 #ifndef NDEBUG
     setup_debug_messenger(context->instance, &context->debug_messenger);
 #endif
@@ -46,7 +47,7 @@ void setup_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *vu
     swap_resources->image_format = surface_format.format;
     swap_resources->extent = extent;
 
-    create_swap_chain(&swap_resources->swap_chain, device_context->logical_device, device_context->physical_device, vulkan_context->surface, min_image_count, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, surface_format, present_mode, extent);
+    create_swap_chain(&swap_resources->swap_chain, device_context->logical_device, device_context->physical_device, vulkan_context->surface, min_image_count, extent);
     
     vkGetSwapchainImagesKHR(device_context->logical_device, swap_resources->swap_chain, &swap_resources->image_count, NULL);
 
@@ -63,7 +64,7 @@ void setup_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *vu
 
 void recreate_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *context, device_context_t *device, render_pipeline_t *render_pipeline, window_t window) {
     int width = 0, height = 0;
-    //get_framebuffer_size(window, &width, &height);
+    get_framebuffer_size(window, &width, &height);
 
     vkDeviceWaitIdle(device->logical_device);
 
@@ -313,15 +314,11 @@ void clean_up_frames(frame_t *frames, uint32_t frame_count, VkDevice logical_dev
     free(frames);
 }
 
-uint32_t begin_frame(frame_t *frame, VkDevice logical_device, VkSwapchainKHR swap_chain) {
+uint32_t begin_frame(frame_t *frame, VkResult *result, VkDevice logical_device, VkSwapchainKHR swap_chain) {
     vkWaitForFences(logical_device, 1, &frame->in_flight_fence, VK_TRUE, UINT64_MAX);
 
     uint32_t image_index;
-    VkResult result = vkAcquireNextImageKHR(logical_device, swap_chain, UINT64_MAX, frame->image_available_semaphore, VK_NULL_HANDLE, &image_index);
-
-    if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        error(1, "Failed to acquire swap chain image");
-    }
+    *result = vkAcquireNextImageKHR(logical_device, swap_chain, UINT64_MAX, frame->image_available_semaphore, VK_NULL_HANDLE, &image_index);
 
     vkResetFences(logical_device, 1, &frame->in_flight_fence);
     vkResetCommandBuffer(frame->command_buffer, 0);
@@ -329,7 +326,7 @@ uint32_t begin_frame(frame_t *frame, VkDevice logical_device, VkSwapchainKHR swa
     return image_index;
 }
 
-void end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_queue, VkQueue present_queue, uint32_t image_index) {
+VkResult end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_queue, VkQueue present_queue, uint32_t image_index) {
     VkSemaphore wait_semaphore[] = {frame->image_available_semaphore};
     VkSemaphore signal_semaphore[] = {frame->render_finished_semaphore};
     VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -361,11 +358,7 @@ void end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_queue
         .pResults = NULL
     };
 
-    VkResult result = vkQueuePresentKHR(present_queue, &present_info);
-
-    if(result != VK_SUCCESS) {
-        error(1, "Failed to present swap chain image");
-    }
+    return vkQueuePresentKHR(present_queue, &present_info);
 }
 
 void main_loop(window_t window) {

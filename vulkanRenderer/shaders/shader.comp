@@ -271,11 +271,11 @@ void main() {
 
     vec2 z = -vec2(aspect_ratio*(float(gl_GlobalInvocationID.x)/float(size.x) - 0.5), float(gl_GlobalInvocationID.y)/float(size.y) - 0.5);
     z *= 2.82;
-    z *= 5.25;
+    //z *= 5.25;
     //z.x -= 0.5;
     //z.y += 0.00125;
 
-    uint m = julia5_number(z);
+    uint m = julia3_number(z);
     float v = normalised_iteration_number(m);
     //float v = d(z);
     if(v > 0) {
@@ -292,13 +292,5 @@ void main() {
         imageStore(image, texel_coordinate, color_gradient);
     } else {
         imageStore(image, texel_coordinate, vec4(color_alt(t-log(v)), 1));
-    }
-    vec4 color_gradient = vec4(color_gradient(z, t), 1.0);
-    
-    z = julia4_number(z);
-    if(z.x*z.x + z.y*z.y > 4096.0) {
-        imageStore(image, texel_coordinate, color_gradient);
-    } else {
-        imageStore(image, texel_coordinate, vec4(ccolor(z), 1));
     }
 }

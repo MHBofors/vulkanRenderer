@@ -14,11 +14,11 @@
     const uint32_t enable_apple_support = 0;
 #endif
 
-void apple_instance_support(VkInstanceCreateInfo *create_info, dynamic_vector *instance_extension_config) {
+void apple_instance_support(VkInstanceCreateInfo *create_info, uint32_t extension_count, const char *extensions[]) {
     if(enable_apple_support) {
         const uint32_t apple_extension_count = 2;
-        const char *apple_extensions[] = {VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, "VK_KHR_get_physical_device_properties2"};
-        
+        const char *apple_extensions[] = {VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME};
+
         for(int i = 0; i < apple_extension_count; i++) {
             vector_add(instance_extension_config, apple_extensions + i);
         }
@@ -26,7 +26,7 @@ void apple_instance_support(VkInstanceCreateInfo *create_info, dynamic_vector *i
     }
 }
 
-void create_instance(VkInstance *p_instance, dynamic_vector *instance_extension_config) {
+void create_instance(VkInstance *p_instance, uint32_t extension_count, const char *extensions[]) {
     VkApplicationInfo app_info = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName = "Render",
@@ -43,13 +43,8 @@ void create_instance(VkInstance *p_instance, dynamic_vector *instance_extension_
         .pNext = NULL
     };
 
-    apple_instance_support(&create_info, instance_extension_config);
-
     VkDebugUtilsMessengerCreateInfoEXT debug_create_info = {0};
     create_validation_layers(&create_info, &debug_create_info, instance_extension_config);
-
-    create_info.ppEnabledExtensionNames = (const char **)vector_get_array(instance_extension_config);
-    create_info.enabledExtensionCount = vector_count(instance_extension_config);
     
     if(vkCreateInstance(&create_info, NULL, p_instance) != VK_SUCCESS) {
         printf("Failed to create instance");

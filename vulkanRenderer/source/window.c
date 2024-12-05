@@ -8,8 +8,8 @@
 #include "window.h"
 
 
-const uint32_t WIDTH = 1024;
-const uint32_t HEIGHT = 1024;
+const uint32_t WIDTH = 800;
+const uint32_t HEIGHT = 800;
 
 void create_surface(VkSurfaceKHR *surface, VkInstance instance, window_t window) {
     if (glfwCreateWindowSurface(instance, window, NULL, surface) != VK_SUCCESS) {
@@ -21,7 +21,6 @@ void create_surface(VkSurfaceKHR *surface, VkInstance instance, window_t window)
 void get_framebuffer_size(window_t window, int *width, int *height) {
     glfwGetFramebufferSize(window, width, height);
 }
-
 
 void get_window_extension_config(dynamic_vector *window_extension_config) {
     uint32_t glfw_extension_count = 0;
@@ -61,6 +60,10 @@ void initialise_window(window_t *window) {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     
     *window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", NULL, NULL);
+}
+
+void update_window() {
+    glfwPollEvents();
 }
 
 void terminate_window(window_t window) {

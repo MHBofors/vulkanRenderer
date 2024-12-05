@@ -5,13 +5,14 @@
 //  Created by Markus Höglin on 2023-10-04.
 //
 
-
+#define _USE_MATH_DEFINES
 #include <stdio.h>
 #include <math.h>
+#include <complex.h>
 #include <time.h>
 #include "renderer.h"
 #include "window.h"
-#include <complex.h>
+#include "graphics_matrices.h"
 
 
 const uint32_t frames_in_flight = 3;
@@ -20,10 +21,10 @@ extern const uint32_t HEIGHT;
 extern const uint32_t WIDTH;
 
 #ifdef __APPLE__
-    const char device_extension_count = 3;
+    const char device_extension_count = 2;
     const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset"};
 #else
-    const char device_extension_count = 2;
+    const char device_extension_count = 1;
     const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 #endif
 
@@ -308,13 +309,14 @@ int main(int argc, const char * argv[]) {
     create_compute_pipeline_layout(&compute_pipeline_layout, device.logical_device, image_layout);
     create_compute_pipeline(&compute_pipeline, compute_pipeline_layout, device.logical_device, "shaders/compute.spv");
 
-    uint32_t texture_size = 32*32;
+    uint32_t texture_size = 2048;
 
     for(uint32_t i = 0; i < frames_in_flight; i++) {
-        create_image(&fractal_images[i].image, &fractal_images[i].memory, device.logical_device, device.physical_device, HEIGHT, WIDTH, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD);
+        create_image(&fractal_images[i].image, &fractal_images[i].memory, device.logical_device, device.physical_device, texture_size, texture_size, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD);
         create_image_view(fractal_image_views + i, fractal_images[i].image, device.logical_device, 1, VK_FORMAT_R32G32B32A32_SFLOAT);
         
         create_buffer(&uniform_buffers[i], &uniform_buffers[i].memory, device.logical_device, device.physical_device, (VkDeviceSize)3*sizeof(float[4][4]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        uniform_buffers[i].mapped_memory = malloc(3*sizeof(float[4][4]));
 
         compute_pipeline_barriers[i][0] = (VkImageMemoryBarrier){
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -486,6 +488,7 @@ int main(int argc, const char * argv[]) {
         }
     };
     vector_add(vertex_vector, &vertex);
+
     vertex = (vertex_t){
         .position = {
             .x = 1.0,
@@ -504,6 +507,7 @@ int main(int argc, const char * argv[]) {
         }
     };
     vector_add(vertex_vector, &vertex);
+
     vertex = (vertex_t){
         .position = {
             .x = 1.0,
@@ -522,6 +526,7 @@ int main(int argc, const char * argv[]) {
         }
     };
     vector_add(vertex_vector, &vertex);
+
     vertex = (vertex_t){
         .position = {
             .x =-1.0,
@@ -562,6 +567,9 @@ int main(int argc, const char * argv[]) {
     float s = 0;
     frame_t *frame;
     VkCommandBuffer command_buffer;
+
+    transformation_t matrices[3] = {0};
+    vector3_t u = {0, 0, 1}, v = {0, 0, 0}, w = {0, 1, 0};
     while(!window_should_close(window)) {
         glfwPollEvents();
         t_0 = t;
@@ -570,7 +578,23 @@ int main(int argc, const char * argv[]) {
         frame = frames + frame_index;
         command_buffer = frame->command_buffer;
 
-        image_index = begin_frame(frame, device.logical_device, swap_resources.swap_chain);
+        VkResult result;
+
+        image_index = begin_frame(frame, &result, device.logical_device, swap_resources.swap_chain);
+        if(result == VK_ERROR_OUT_OF_DATE_KHR) {
+            recreate_swap_resources(&swap_resources, &context, &device, &render_pipeline, window);
+        } else if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+            error(1, "Failed to acquire swap chain image!");
+        }
+
+
+        matrices[0] = identity_matrix();
+        matrices[1] = camera_matrix(u, v, w);
+        float aspect_ratio = (float)swap_resources.extent.height/(float)swap_resources.extent.width;
+        matrices[2] = perspective_matrix(M_PI_2, aspect_ratio, 0.1f, 10.0f);
+        matrices[1] = identity_matrix();matrices[2] = identity_matrix();
+        memcpy(uniform_buffers[frame_index].mapped_memory, matrices, 3*sizeof(float[4][4]));
+        
 
         begin_command_buffer(command_buffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
@@ -589,7 +613,7 @@ int main(int argc, const char * argv[]) {
         vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute_pipeline);
         vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute_pipeline_layout, 0, 1, &compute_descriptor_sets[frame_index], 0, NULL);
         
-
+        
         s = t*0.125;
         float d;
         d = 0.75f;
@@ -656,7 +680,14 @@ int main(int argc, const char * argv[]) {
 
         end_command_buffer(command_buffer);
 
-        end_frame(frame, swap_resources.swap_chain, device.queues.graphics_queue, device.queues.graphics_queue, image_index);
+        result = end_frame(frame, swap_resources.swap_chain, device.queues.graphics_queue, device.queues.graphics_queue, image_index);
+
+        if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+            recreate_swap_resources(&swap_resources, &context, &device, &render_pipeline, window);
+        } else if(result != VK_SUCCESS) {
+            error(1, "Failed to present swap chain image");
+        }
+
         frame_index = (frame_index + 1) % frames_in_flight;
     }
 
@@ -677,6 +708,7 @@ int main(int argc, const char * argv[]) {
         vkDestroyImageView(device.logical_device, fractal_image_views[i], NULL);
         vkFreeMemory(device.logical_device, uniform_buffers[i].memory, NULL);
         vkDestroyBuffer(device.logical_device, uniform_buffers[i].buffer, NULL);
+        free(uniform_buffers[i].mapped_memory);
     }
 
     vkDestroyPipelineLayout(device.logical_device, compute_pipeline_layout, NULL);
