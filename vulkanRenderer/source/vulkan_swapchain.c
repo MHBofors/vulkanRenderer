@@ -5,7 +5,7 @@
 //  Created by Markus Höglin on 2023-11-28.
 //
 
-#include "vulkan_swap_chain.h"
+#include "vulkan_swapchain.h"
 
 void query_surface_present_modes(VkPhysicalDevice device, VkSurfaceKHR surface, dynamic_vector *present_modes) {
     VkSurfaceCapabilitiesKHR surface_capabilities;
@@ -85,7 +85,7 @@ VkPresentModeKHR choose_swap_present_mode(VkPhysicalDevice physical_device, VkSu
 
 
 
-void create_swap_chain(VkSwapchainKHR *swap_chain, VkDevice device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, uint32_t image_count, VkExtent2D image_extent) {
+void create_swapchain(VkSwapchainKHR *swapchain, VkDevice device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, uint32_t image_count, VkExtent2D image_extent) {
     VkSurfaceCapabilitiesKHR capabilities;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities);
 
@@ -120,14 +120,14 @@ void create_swap_chain(VkSwapchainKHR *swap_chain, VkDevice device, VkPhysicalDe
         create_info.pQueueFamilyIndices = NULL; // Optional
     }
     
-    if (vkCreateSwapchainKHR(device, &create_info, NULL, swap_chain) != VK_SUCCESS) {
+    if (vkCreateSwapchainKHR(device, &create_info, NULL, swapchain) != VK_SUCCESS) {
         printf("Failed to create swap chain!\n");
         exit(1);
     }
 }
 
-void get_swap_chain_images(VkSwapchainKHR swap_chain, VkDevice device, dynamic_vector *swap_chain_images) {
+void get_swapchain_images(VkSwapchainKHR swapchain, VkDevice device, dynamic_vector *swapchain_images) {
     uint32_t image_count;
-    vkGetSwapchainImagesKHR(device, swap_chain, &image_count, NULL);
-    vkGetSwapchainImagesKHR(device, swap_chain, &image_count, vector_reserve(swap_chain_images, image_count));
+    vkGetSwapchainImagesKHR(device, swapchain, &image_count, NULL);
+    vkGetSwapchainImagesKHR(device, swapchain, &image_count, vector_reserve(swapchain_images, image_count));
 }

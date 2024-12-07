@@ -1,5 +1,6 @@
 CC = gcc
 
+OS = MACOS
 SRC_DIR = source
 INCLUDE_DIR = include
 BUILD_DIR = build
@@ -7,7 +8,12 @@ BIN_DIR = bin
 SHADER_DIR = shaders
 
 CFLAGS = -std=c17 -g -Wall -O2 -I./$(INCLUDE_DIR)
-LDFLAGS = -lglfw3 -lvulkan-1 -lpthread -lm
+
+ifeq ($(OS), WINDOWS) 
+	LDFLAGS = -lglfw3 -lvulkan-1 -lpthread -lm
+else
+	LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lm -lSDL2 -rpath /usr/local/lib
+endif
 
 # Source files
 SRC_FILES = $(wildcard $(SRC_DIR)/*.c)

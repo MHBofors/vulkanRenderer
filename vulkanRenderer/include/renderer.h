@@ -5,7 +5,7 @@
 #include "vulkan_render_pipeline.h"
 #include "vulkan_instance.h"
 #include "vulkan_device.h"
-#include "vulkan_swap_chain.h"
+#include "vulkan_swapchain.h"
 #include "vulkan_command_buffers.h"
 
 typedef struct {
@@ -38,8 +38,8 @@ typedef struct device_context_t {
     device_queues queues;
 } device_context_t;
 
-typedef struct swap_chain_t {
-    VkSwapchainKHR swap_chain;
+typedef struct swapchain_t {
+    VkSwapchainKHR swapchain;
     VkExtent2D extent;
     VkFormat image_format;
     uint32_t image_count;
@@ -67,20 +67,19 @@ typedef struct host_buffer_t {
 } host_buffer_t;
 
 typedef struct image_t {
-    VkImage image;
+   VkImage image;
     VkDeviceMemory memory;
 } image_t;
 
 typedef struct host_image_t {
-    VkImage image;
-    VkDeviceMemory memory;
+    image_t image;
     void *mapped_memory;
 } host_image_t;
 
 typedef struct frame_t {
+    VkSemaphore image_available_semaphore, render_finished_semaphore;
     VkFence in_flight_fence;
-    VkSemaphore image_available_semaphore;
-    VkSemaphore render_finished_semaphore;
+
     VkCommandBuffer command_buffer;
 } frame_t;
 
@@ -93,7 +92,7 @@ typedef struct renderer_t {
     VkDevice logical_device;
     device_queues queues;
 
-    VkSwapchainKHR swap_chain;
+    VkSwapchainKHR swapchain;
     VkExtent2D extent;
     VkFormat swapchain_image_format;
     uint32_t swapchain_image_count;
@@ -101,6 +100,9 @@ typedef struct renderer_t {
     VkImageView *swapchain_image_views;
     VkFramebuffer *framebuffers;
 
+    VkRenderPass render_pass;
+
+    VkCommandPool command_pool;
     uint32_t frame_count;
     frame_t *frames;
 } renderer_t;
@@ -110,9 +112,26 @@ typedef struct engine_t {
     renderer_t renderer;
 } engine_t;
 
-void initialise_renderer(engine_t *engine);
+void initialise_engine(engine_t *engine);
+void terminate_engine(engine_t *engine);
 
-void initialise_swapchain(engine_t *engine);
+void initialise_renderer(renderer_t *renderer, window_t window);
+void terminate_renderer(renderer_t *renderer);
+
+void setup_swapchain(renderer_t *renderer, window_t window);
+void recreate_swapchain(renderer_t *renderer, window_t window);
+void terminate_swapchain(renderer_t *renderer);
+
+void setup_render_pass(renderer_t *renderer);
+void destroy_render_pass(renderer_t *renderer);
+
+void setup_framebuffers(renderer_t *renderer);
+void destroy_framebuffers(renderer_t *renderer);
+
+void setup_frame_resources(renderer_t *renderer, uint32_t frame_count);
+void destroy_frame_resources(renderer_t *renderer);
+
+
 
 void setup_context(vulkan_context_t *context, window_t window);
 
@@ -148,8 +167,8 @@ void clean_up_frames(frame_t *frames, uint32_t frame_count, VkDevice logical_dev
 
 void draw_frame();
 
-uint32_t begin_frame(frame_t *frame, VkResult *result, VkDevice logical_device, VkSwapchainKHR swap_chain);
+uint32_t begin_frame(frame_t *frame, VkResult *result, VkDevice logical_device, VkSwapchainKHR swapchain);
 
-VkResult end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_queue, VkQueue present_queue, uint32_t image_index);
+VkResult end_frame(frame_t *frame, VkSwapchainKHR swapchain, VkQueue graphics_queue, VkQueue present_queue, uint32_t image_index);
 
 #endif /* renderer_h */

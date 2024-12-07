@@ -15,18 +15,10 @@
 #include "graphics_matrices.h"
 
 
-const uint32_t frames_in_flight = 3;
+extern const uint32_t frames_in_flight;
 extern const uint32_t enable_validation_layers;
 extern const uint32_t HEIGHT;
 extern const uint32_t WIDTH;
-
-#ifdef __APPLE__
-    const char device_extension_count = 2;
-    const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset"};
-#else
-    const char device_extension_count = 1;
-    const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-#endif
 
 void create_linear_sampler(VkSampler *sampler, VkDevice logical_device) {
     VkSamplerCreateInfo create_info = {
@@ -201,6 +193,10 @@ void setup_graphics_pipeline(VkPipeline *graphics_pipeline, VkPipelineLayout pip
 }
 
 int main(int argc, const char * argv[]) {
+    engine_t entropy_engine;
+    initialise_engine(&entropy_engine);
+    terminate_engine(&entropy_engine);
+
     /* Initialization */
     float phi = (1.0 + sqrt(5.0))*0.5;
     float phi_1 = (sqrt(5.0) - 1)*0.5;
@@ -571,7 +567,8 @@ int main(int argc, const char * argv[]) {
     transformation_t matrices[3] = {0};
     vector3_t u = {0, 0, 1}, v = {0, 0, 0}, w = {0, 1, 0};
     while(!window_should_close(window)) {
-        glfwPollEvents();
+        update_window();
+        
         t_0 = t;
         t = (float)(clock() - time_start)/CLOCKS_PER_SEC;
 
@@ -580,7 +577,7 @@ int main(int argc, const char * argv[]) {
 
         VkResult result;
 
-        image_index = begin_frame(frame, &result, device.logical_device, swap_resources.swap_chain);
+        image_index = begin_frame(frame, &result, device.logical_device, swap_resources.swapchain);
         if(result == VK_ERROR_OUT_OF_DATE_KHR) {
             recreate_swap_resources(&swap_resources, &context, &device, &render_pipeline, window);
         } else if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -680,7 +677,7 @@ int main(int argc, const char * argv[]) {
 
         end_command_buffer(command_buffer);
 
-        result = end_frame(frame, swap_resources.swap_chain, device.queues.graphics_queue, device.queues.graphics_queue, image_index);
+        result = end_frame(frame, swap_resources.swapchain, device.queues.graphics_queue, device.queues.graphics_queue, image_index);
 
         if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             recreate_swap_resources(&swap_resources, &context, &device, &render_pipeline, window);

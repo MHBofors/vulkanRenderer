@@ -2,22 +2,6 @@
 
 #include "renderer.h"
 
-void setup_context(vulkan_context_t *context, window_t window) {
-    dynamic_vector *instance_extension_config = vector_alloc(sizeof(char *));
-    get_instance_extensions(extension_count, extensions);
-
-    create_instance(&context->instance, instance_extension_config);
-    vector_free(instance_extension_config);
-
-#ifndef NDEBUG
-    setup_debug_messenger(context->instance, &context->debug_messenger);
-#endif
-    create_surface(&context->surface, context->instance, window);
-}
-
-void setup_device_context(device_context_t *device_context, vulkan_context_t *context) {
-    dynamic_vector *device_config = vector_alloc(sizeof(const char *));
-
 #ifdef __APPLE__
     const char device_extension_count = 2;
     const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset"};
@@ -26,11 +10,190 @@ void setup_device_context(device_context_t *device_context, vulkan_context_t *co
     const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 #endif
 
+const uint32_t frames_in_flight = 3;
+
+void initialise_engine(engine_t *engine) {
+    initialise_window(&engine->window);
+    initialise_renderer(&engine->renderer, engine->window);
+}
+
+void terminate_engine(engine_t *engine) {
+    terminate_window(engine->window);
+    terminate_renderer(&engine->renderer);
+}
+
+
+
+void initialise_renderer(renderer_t *renderer, window_t window) {
+    uint32_t window_extension_count;
+    get_window_extensions(&window_extension_count, NULL);
+    
+    const char *window_extensions[window_extension_count];
+    get_window_extensions(&window_extension_count, window_extensions);
+
+    create_instance(&renderer->instance, window_extension_count, window_extensions);
+    create_debug_messenger(renderer->instance, &renderer->debug_messenger);
+    create_surface(&renderer->surface, renderer->instance, window);
+
+    select_physical_device(&renderer->physical_device, renderer->instance, renderer->surface);
+    create_logical_device(&renderer->logical_device, renderer->physical_device, renderer->surface, &renderer->queues, device_extension_count, device_extensions);
+
+    setup_swapchain(renderer, window);
+    setup_render_pass(renderer);
+    setup_framebuffers(renderer);
+
+    queue_family_indices indices = find_queue_families(renderer->physical_device);
+    create_command_pool(&renderer->command_pool, renderer->logical_device, indices.graphics_family);
+
+    setup_frame_resources(renderer, frames_in_flight);
+}
+
+void terminate_renderer(renderer_t *renderer) {
+    vkDeviceWaitIdle(renderer->logical_device);
+
+    //destroy_framebuffers(renderer);
+    terminate_swapchain(renderer);
+    
+    destroy_frame_resources(renderer);
+    vkDestroyCommandPool(renderer->logical_device, renderer->command_pool, NULL);
+    
+    destroy_render_pass(renderer);
+
+    destroy_debug_utils_messenger_EXT(renderer->instance, renderer->debug_messenger, NULL);
+    vkDestroySurfaceKHR(renderer->instance, renderer->surface, NULL);
+    vkDestroyInstance(renderer->instance, NULL);
+
+    vkDestroyDevice(renderer->logical_device, NULL);
+}
+
+
+
+void setup_swapchain(renderer_t *renderer, window_t window) {
+    VkSurfaceCapabilitiesKHR capabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(renderer->physical_device, renderer->surface, &capabilities);
+    
+    VkPresentModeKHR present_mode = choose_swap_present_mode(renderer->physical_device, renderer->surface);
+    VkSurfaceFormatKHR surface_format = choose_swap_surface_format(renderer->physical_device, renderer->surface);
+    VkExtent2D extent = choose_swap_extent(&capabilities, window);
+    uint32_t min_image_count = capabilities.minImageCount + 1;
+
+    renderer->swapchain_image_format = surface_format.format;
+    renderer->extent = extent;
+
+    create_swapchain(&renderer->swapchain, renderer->logical_device, renderer->physical_device, renderer->surface, min_image_count, extent);
+    
+    vkGetSwapchainImagesKHR(renderer->logical_device, renderer->swapchain, &renderer->swapchain_image_count, NULL);
+
+    renderer->swapchain_images = malloc(renderer->swapchain_image_count*sizeof(VkImage));
+    renderer->swapchain_image_views = malloc(renderer->swapchain_image_count*sizeof(VkImageView));
+
+    vkGetSwapchainImagesKHR(renderer->logical_device, renderer->swapchain, &renderer->swapchain_image_count, renderer->swapchain_images);
+    
+    for(uint32_t i = 0; i < renderer->swapchain_image_count; i++) {
+        create_image_view(renderer->swapchain_image_views + i, renderer->swapchain_images[i], renderer->logical_device, 1, renderer->swapchain_image_format);
+    }
+}
+
+void terminate_swapchain(renderer_t *renderer) {
+    for(uint32_t i = 0; i < renderer->swapchain_image_count; i++) {
+        vkDestroyImageView(renderer->logical_device, renderer->swapchain_image_views[i], NULL);
+    }
+
+    vkDestroySwapchainKHR(renderer->logical_device, renderer->swapchain, NULL);
+
+    free(renderer->swapchain_images);
+    free(renderer->swapchain_image_views);
+}
+
+void recreate_swapchain(renderer_t *renderer, window_t window) {
+    int width = 0, height = 0;
+    get_framebuffer_size(window, &width, &height);
+
+    vkDeviceWaitIdle(renderer->logical_device);
+
+    terminate_swapchain(renderer);
+    setup_swapchain(renderer, window);
+    setup_framebuffers(renderer);
+}
+
+
+
+void setup_render_pass(renderer_t *renderer) {
+    create_render_pass_simple(&renderer->render_pass, renderer->logical_device, renderer->swapchain_image_format);
+}
+
+void destroy_render_pass(renderer_t *renderer) {
+    vkDestroyRenderPass(renderer->logical_device, renderer->render_pass, NULL);
+}
+
+
+
+void setup_framebuffers(renderer_t *renderer) {
+    renderer->framebuffers = malloc(renderer->swapchain_image_count*sizeof(VkFramebuffer));
+
+    for(uint32_t i = 0; i < renderer->swapchain_image_count; i++) {
+        create_framebuffer(&renderer->framebuffers[i], renderer->logical_device, renderer->render_pass, 1, &renderer->swapchain_image_views[i], renderer->extent);
+    }
+}
+
+void destroy_framebuffers(renderer_t *renderer) {
+    for(uint32_t i = 0; i < renderer->swapchain_image_count; i++) {
+        vkDestroyFramebuffer(renderer->logical_device, renderer->framebuffers[i], NULL);
+    }
+
+    free(renderer->framebuffers);
+}
+
+
+
+void setup_frame_resources(renderer_t *renderer, uint32_t frame_count) {
+    renderer->frame_count = frame_count;
+    renderer->frames = malloc(renderer->frame_count*sizeof(frame_t));
+
+    if(renderer->frames == NULL) {
+        error(1, "Failed to allocate frames\n");
+    }
+
+    for(uint32_t i = 0; i < renderer->frame_count; i++) {
+        create_frame(&renderer->frames[i], renderer->logical_device, renderer->command_pool);
+    }
+}
+
+void destroy_frame_resources(renderer_t *renderer) {
+    for(uint32_t i = 0; i < renderer->frame_count; i++) {
+        clean_up_frame(&renderer->frames[i], renderer->logical_device);
+    }
+
+    free(renderer->frames);
+}
+
+
+
+void setup_context(vulkan_context_t *context, window_t window) {
+    dynamic_vector *instance_extension_config = vector_alloc(sizeof(char *));
+    uint32_t window_extension_count;
+    get_window_extensions(&window_extension_count, NULL);
+
+    const char *window_extensions[window_extension_count];
+    get_window_extensions(&window_extension_count, window_extensions);
+
+    create_instance(&context->instance, window_extension_count, window_extensions);
+    vector_free(instance_extension_config);
+
+#ifndef NDEBUG
+    create_debug_messenger(context->instance, &context->debug_messenger);
+#endif
+    create_surface(&context->surface, context->instance, window);
+}
+
+void setup_device_context(device_context_t *device_context, vulkan_context_t *context) {
+    dynamic_vector *device_config = vector_alloc(sizeof(const char *));
+
     for(uint32_t i = 0; i < device_extension_count; i++) {
         vector_add(device_config, device_extensions + i);
     }
     select_physical_device(&device_context->physical_device, context->instance, context->surface);
-    create_logical_device(&device_context->logical_device, device_context->physical_device, context->surface, &device_context->queues, device_config);
+    create_logical_device(&device_context->logical_device, device_context->physical_device, context->surface, &device_context->queues, vector_count(device_config), vector_get_array(device_config));
 
     vector_free(device_config);
 }
@@ -47,15 +210,15 @@ void setup_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *vu
     swap_resources->image_format = surface_format.format;
     swap_resources->extent = extent;
 
-    create_swap_chain(&swap_resources->swap_chain, device_context->logical_device, device_context->physical_device, vulkan_context->surface, min_image_count, extent);
+    create_swapchain(&swap_resources->swapchain, device_context->logical_device, device_context->physical_device, vulkan_context->surface, min_image_count, extent);
     
-    vkGetSwapchainImagesKHR(device_context->logical_device, swap_resources->swap_chain, &swap_resources->image_count, NULL);
+    vkGetSwapchainImagesKHR(device_context->logical_device, swap_resources->swapchain, &swap_resources->image_count, NULL);
 
     swap_resources->images = malloc(sizeof(VkImage) * swap_resources->image_count);
     swap_resources->image_views = malloc(sizeof(VkImageView) * swap_resources->image_count);
     swap_resources->framebuffers = malloc(sizeof(VkFramebuffer) * swap_resources->image_count);
 
-    vkGetSwapchainImagesKHR(device_context->logical_device, swap_resources->swap_chain, &swap_resources->image_count, swap_resources->images);
+    vkGetSwapchainImagesKHR(device_context->logical_device, swap_resources->swapchain, &swap_resources->image_count, swap_resources->images);
     
     for(uint32_t i = 0; i < swap_resources->image_count; i++) {
         create_image_view(swap_resources->image_views + i, swap_resources->images[i], device_context->logical_device, 1, swap_resources->image_format);
@@ -216,7 +379,7 @@ void clean_up_swap_resources(swap_resources_t *swap_resources, device_context_t 
         vkDestroyImageView(device_context->logical_device, swap_resources->image_views[i], NULL);
     }
 
-    vkDestroySwapchainKHR(device_context->logical_device, swap_resources->swap_chain, NULL);
+    vkDestroySwapchainKHR(device_context->logical_device, swap_resources->swapchain, NULL);
 
     free(swap_resources->images);
     free(swap_resources->image_views);
@@ -314,11 +477,11 @@ void clean_up_frames(frame_t *frames, uint32_t frame_count, VkDevice logical_dev
     free(frames);
 }
 
-uint32_t begin_frame(frame_t *frame, VkResult *result, VkDevice logical_device, VkSwapchainKHR swap_chain) {
+uint32_t begin_frame(frame_t *frame, VkResult *result, VkDevice logical_device, VkSwapchainKHR swapchain) {
     vkWaitForFences(logical_device, 1, &frame->in_flight_fence, VK_TRUE, UINT64_MAX);
 
     uint32_t image_index;
-    *result = vkAcquireNextImageKHR(logical_device, swap_chain, UINT64_MAX, frame->image_available_semaphore, VK_NULL_HANDLE, &image_index);
+    *result = vkAcquireNextImageKHR(logical_device, swapchain, UINT64_MAX, frame->image_available_semaphore, VK_NULL_HANDLE, &image_index);
 
     vkResetFences(logical_device, 1, &frame->in_flight_fence);
     vkResetCommandBuffer(frame->command_buffer, 0);
@@ -326,7 +489,7 @@ uint32_t begin_frame(frame_t *frame, VkResult *result, VkDevice logical_device, 
     return image_index;
 }
 
-VkResult end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_queue, VkQueue present_queue, uint32_t image_index) {
+VkResult end_frame(frame_t *frame, VkSwapchainKHR swapchain, VkQueue graphics_queue, VkQueue present_queue, uint32_t image_index) {
     VkSemaphore wait_semaphore[] = {frame->image_available_semaphore};
     VkSemaphore signal_semaphore[] = {frame->render_finished_semaphore};
     VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -346,14 +509,14 @@ VkResult end_frame(frame_t *frame, VkSwapchainKHR swap_chain, VkQueue graphics_q
         error(1, "Failed to submit draw command buffer");
     }
 
-    VkSwapchainKHR swap_chains[] = {swap_chain};
+    VkSwapchainKHR swapchains[] = {swapchain};
     
     VkPresentInfoKHR present_info = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = signal_semaphore,
         .swapchainCount = 1,
-        .pSwapchains = swap_chains,
+        .pSwapchains = swapchains,
         .pImageIndices = &image_index,
         .pResults = NULL
     };

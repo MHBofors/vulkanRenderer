@@ -127,7 +127,7 @@ uint32_t is_complete(queue_family_indices indices) {
           && indices.compute_family != ~0);
 }
 
-void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, device_queues *queues, dynamic_vector *device_extension_config) {
+void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, device_queues *queues, uint32_t extension_count, const char *extensions[]) {
     binary_tree *queue_tree;
     dynamic_vector *value_vector = vector_alloc(sizeof(uint32_t));
 
@@ -172,14 +172,13 @@ void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_d
         .pQueueCreateInfos = queue_create_infos,
         .queueCreateInfoCount = queue_count,
         .pEnabledFeatures = &device_features,
-        .ppEnabledExtensionNames = vector_get_array(device_extension_config)
+        .enabledExtensionCount = extension_count,
+        .ppEnabledExtensionNames = extensions
     };
 
     /*
         Add conditional extension stuff?
     */
-
-    create_info.enabledExtensionCount = vector_count(device_extension_config);
 
     if(vkCreateDevice(physical_device, &create_info, NULL, logical_device) != VK_SUCCESS) {
         printf("Failed to create logical device!\n");

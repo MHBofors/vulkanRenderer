@@ -13,7 +13,7 @@
 #include <vulkan/vulkan.h>
 #include "vulkan_utils.h"
 
-void create_validation_layers(VkInstanceCreateInfo *create_info, VkDebugUtilsMessengerCreateInfoEXT *debug_create_info, dynamic_vector *vulkan_extension_config);
+void create_validation_layers(VkInstanceCreateInfo *create_info, VkDebugUtilsMessengerCreateInfoEXT *debug_create_info);
 
 void get_debug_extensions(dynamic_vector *vulkan_extension_config);
 
@@ -26,7 +26,7 @@ void populate_debug_messenger_create_info(VkDebugUtilsMessengerCreateInfoEXT *cr
 
 uint32_t check_validation_layer_support(void);
 
-void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT *debug_messenger);
+void create_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT *debug_messenger);
 
 
 #endif /* vulkan_debug_h */
