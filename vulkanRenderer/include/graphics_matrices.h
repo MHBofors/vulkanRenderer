@@ -46,7 +46,7 @@ transformation_t translation_matrix(vector3_t u);
 
 transformation_t scaling_matrix(vector3_t u);
 
-transformation_t rotationMatrix(vector3_t axis, float theta);
+transformation_t rotation_matrix(vector3_t axis, float theta);
 
 transformation_t camera_transform(vector3_t eye_basis[3], vector3_t eye, vector3_t object);
 

@@ -275,22 +275,22 @@ void main() {
     //z.x -= 0.5;
     //z.y += 0.00125;
 
-    uint m = julia3_number(z);
-    float v = normalised_iteration_number(m);
-    //float v = d(z);
+    //uint m = julia3_number(z);
+    //float v = normalised_iteration_number(m);
+    float v = d(z);
     if(v > 0) {
         imageStore(image, texel_coordinate, vec4(color(-log(v)), 1));
     } else {
-        //float r = length(z);
-        //imageStore(image, texel_coordinate, vec4(0.0, 0.0, 0.0, 1.0));
         vec4 color_gradient = vec4(color_gradient(z, t), 1.0);
         imageStore(image, texel_coordinate, color_gradient);
     }
 
+    /*
     if(m >= MAX_ITER-1) {
         vec4 color_gradient = vec4(color_gradient(z, t), 1.0);
         imageStore(image, texel_coordinate, color_gradient);
     } else {
         imageStore(image, texel_coordinate, vec4(color_alt(t-log(v)), 1));
     }
+    */
 }

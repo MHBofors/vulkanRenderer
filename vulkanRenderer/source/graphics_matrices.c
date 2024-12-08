@@ -217,7 +217,7 @@ transformation_t scaling_matrix(vector3_t u) {
     };
 }
 
-transformation_t  quaternion_matrix(quaternion_t q) {
+transformation_t quaternion_matrix(quaternion_t q) {
     q = quaternion_normalise(q);
     return (transformation_t){
         1 - 2*(q.j*q.j + q.k*q.k), 2*(q.i*q.j - q.k*q.r)    , 2*(q.i*q.k + q.j*q.r)    , 0.0f,
@@ -227,7 +227,7 @@ transformation_t  quaternion_matrix(quaternion_t q) {
     };
 }
 
-transformation_t rotationMatrix(vector3_t axis, float theta) {
+transformation_t rotation_matrix(vector3_t axis, float theta) {
     quaternion_t q = quaternion_rotation(axis, theta);
     return quaternion_matrix(q);
 }

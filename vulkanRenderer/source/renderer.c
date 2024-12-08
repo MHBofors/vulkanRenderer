@@ -51,7 +51,7 @@ void initialise_renderer(renderer_t *renderer, window_t window) {
 void terminate_renderer(renderer_t *renderer) {
     vkDeviceWaitIdle(renderer->logical_device);
 
-    //destroy_framebuffers(renderer);
+    destroy_framebuffers(renderer);
     terminate_swapchain(renderer);
     
     destroy_frame_resources(renderer);
@@ -59,11 +59,11 @@ void terminate_renderer(renderer_t *renderer) {
     
     destroy_render_pass(renderer);
 
+    vkDestroyDevice(renderer->logical_device, NULL);
+
     destroy_debug_utils_messenger_EXT(renderer->instance, renderer->debug_messenger, NULL);
     vkDestroySurfaceKHR(renderer->instance, renderer->surface, NULL);
     vkDestroyInstance(renderer->instance, NULL);
-
-    vkDestroyDevice(renderer->logical_device, NULL);
 }
 
 

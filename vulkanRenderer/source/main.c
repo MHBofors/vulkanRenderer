@@ -305,14 +305,15 @@ int main(int argc, const char * argv[]) {
     create_compute_pipeline_layout(&compute_pipeline_layout, device.logical_device, image_layout);
     create_compute_pipeline(&compute_pipeline, compute_pipeline_layout, device.logical_device, "shaders/compute.spv");
 
-    uint32_t texture_size = 2048;
+    uint32_t texture_width = 1024;
+    uint32_t texture_height = 1024;
 
     for(uint32_t i = 0; i < frames_in_flight; i++) {
-        create_image(&fractal_images[i].image, &fractal_images[i].memory, device.logical_device, device.physical_device, texture_size, texture_size, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD);
+        create_image(&fractal_images[i].image, &fractal_images[i].memory, device.logical_device, device.physical_device, texture_width, texture_height, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD);
         create_image_view(fractal_image_views + i, fractal_images[i].image, device.logical_device, 1, VK_FORMAT_R32G32B32A32_SFLOAT);
         
-        create_buffer(&uniform_buffers[i], &uniform_buffers[i].memory, device.logical_device, device.physical_device, (VkDeviceSize)3*sizeof(float[4][4]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        uniform_buffers[i].mapped_memory = malloc(3*sizeof(float[4][4]));
+        create_buffer(&uniform_buffers[i].buffer, &uniform_buffers[i].memory, device.logical_device, device.physical_device, (VkDeviceSize)3*sizeof(float[4][4]), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        vkMapMemory(device.logical_device, uniform_buffers[i].memory, 0, (VkDeviceSize)3*sizeof(float[4][4]), 0, &uniform_buffers[i].mapped_memory);
 
         compute_pipeline_barriers[i][0] = (VkImageMemoryBarrier){
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -565,7 +566,7 @@ int main(int argc, const char * argv[]) {
     VkCommandBuffer command_buffer;
 
     transformation_t matrices[3] = {0};
-    vector3_t u = {0, 0, 1}, v = {0, 0, 0}, w = {0, 1, 0};
+    vector3_t u = {0, 0, 1}, v = {0, 0, 0}, w = {0, 1, 0}, r = {1, 1, 0};
     while(!window_should_close(window)) {
         update_window();
         
@@ -585,11 +586,11 @@ int main(int argc, const char * argv[]) {
         }
 
 
-        matrices[0] = identity_matrix();
+        matrices[0] = rotation_matrix(r, t);
         matrices[1] = camera_matrix(u, v, w);
         float aspect_ratio = (float)swap_resources.extent.height/(float)swap_resources.extent.width;
         matrices[2] = perspective_matrix(M_PI_2, aspect_ratio, 0.1f, 10.0f);
-        matrices[1] = identity_matrix();matrices[2] = identity_matrix();
+
         memcpy(uniform_buffers[frame_index].mapped_memory, matrices, 3*sizeof(float[4][4]));
         
 
@@ -618,14 +619,18 @@ int main(int argc, const char * argv[]) {
         //t *= 0.125;
         //float z[3] = {(cos(s) - cos(2.00*s)*0.5)*0.5, (sin(s) - sin(2.00*s)*0.5)*0.5, 0*0.25*t};
         //float z[3] = {(cos(s) - cos(6.00*s)*d)*0.5, (sin(s) - sin(6.00*s)*d)*0.5, 0.25*t};
+        /*
         float z[3] = {cos(s) + 2.0*cos(-4.00*s), sin(s) + 2.0*sin(-4.00*s), 0.125*t};
         z[0] *= 0.75;
         z[1] *= 0.75;
-
+        */
+        float z[3] = {(cos(s) - cos(2.00*s)*0.5)*0.5, (sin(s) - sin(2.00*s)*0.5)*0.5, t};
+        z[0] *= 1.0 + 0.25;
+        z[1] *= 1.0 + 0.25;
         
         //float z[2] = {(cos(t) - cos(2.0*t)*0.5)*0.5+0.00625*cos(0.125*t), (sin(t) - sin(2.0*t)*0.5+0.00625*sin(0.125*t))*0.5};
         vkCmdPushConstants(command_buffer, compute_pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, 12, z);
-        vkCmdDispatch(command_buffer, HEIGHT/32, WIDTH/32, 1);
+        vkCmdDispatch(command_buffer, texture_width/32 + (texture_width % 32 != 0), texture_height/32 + (texture_height % 32 != 0), 1);
 
         vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, &compute_pipeline_barriers[frame_index][1]);
 
@@ -705,7 +710,6 @@ int main(int argc, const char * argv[]) {
         vkDestroyImageView(device.logical_device, fractal_image_views[i], NULL);
         vkFreeMemory(device.logical_device, uniform_buffers[i].memory, NULL);
         vkDestroyBuffer(device.logical_device, uniform_buffers[i].buffer, NULL);
-        free(uniform_buffers[i].mapped_memory);
     }
 
     vkDestroyPipelineLayout(device.logical_device, compute_pipeline_layout, NULL);

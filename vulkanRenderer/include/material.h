@@ -15,9 +15,12 @@ typedef struct material_t {
     VkDescriptorSet descriptor;
 } material_t;
 
-typedef struct active_material_t {
-    material_pipeline_t *material_pipeline;
-    VkDescriptorSet descriptor;
-} active_material_t;
+typedef struct render_object_t {
+    uint32_t index_count;
+    uint32_t first_index;
+    VkBuffer index_buffer;
+    VkBuffer *vertex_buffer;
+    material_t *material_instance;
+} render_object_t;
 
 #endif
