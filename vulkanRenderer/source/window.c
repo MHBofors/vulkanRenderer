@@ -59,10 +59,17 @@ void initialise_window(window_t *window) {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     
     *window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", NULL, NULL);
+    if(window == NULL) {
+        error(1, "Failed to create window");
+    }
 }
 
-void update_window() {
+void window_update() {
     glfwPollEvents();
+}
+
+void window_wait_events() {
+    glfwWaitEvents();
 }
 
 void terminate_window(window_t window) {

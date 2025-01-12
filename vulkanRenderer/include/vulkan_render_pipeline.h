@@ -8,6 +8,7 @@
 #define vulkan_render_pipeline_h
 
 #include <stdio.h>
+#include "vulkan_resources.h"
 #include "vulkan_instance.h"
 #include "vulkan_device.h"
 #include "vulkan_swapchain.h"
@@ -47,6 +48,6 @@ void set_blend_attachment_none(VkPipelineColorBlendAttachmentState *color_blend_
 
 void set_depth_test_none(pipeline_details_t *pipeline_details);
 
-void create_graphics_pipeline(VkPipeline *graphics_pipeline, VkDevice logical_device, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, pipeline_details_t *pipeline_details);
+VkPipeline create_graphics_pipeline(VkDevice logical_device, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, pipeline_details_t *pipeline_details);
 
 #endif /* vulkan_render_pipeline_h */

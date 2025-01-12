@@ -35,6 +35,6 @@ queue_family_indices find_queue_families(VkPhysicalDevice device);
 
 uint32_t is_complete(queue_family_indices indices);
 
-void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_device, VkSurfaceKHR surface, device_queues *queues, uint32_t extension_count, const char *extensions[]);
+void create_logical_device(VkDevice *logical_device, VkPhysicalDevice physical_device, device_queues *queues, uint32_t extension_count, const char *extensions[]);
 
 #endif /* vulkan_device_h */

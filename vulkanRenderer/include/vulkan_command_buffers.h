@@ -4,8 +4,8 @@
 #ifndef vulkan_command_buffers_h
 #define vulkan_command_buffers_h
 
-#include "vulkan_resources.h"
-#include "vulkan_shader.h"
+#include <vulkan/vulkan.h>
+#include "vulkan_utils.h"
 
 void create_primary_command_buffer(VkCommandBuffer *command_buffer, VkDevice logical_device, VkCommandPool command_pool, uint32_t num_buffers);
 void create_secondary_command_buffer(VkCommandBuffer *command_buffer, VkDevice logical_device, VkCommandPool command_pool, uint32_t num_buffers);

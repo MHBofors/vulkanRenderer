@@ -124,7 +124,9 @@ void set_depth_test_none(pipeline_details_t *pipeline_details) {
     pipeline_details->depth_stencil.maxDepthBounds = 1.0f;
 }
 
-void create_graphics_pipeline(VkPipeline *graphics_pipeline, VkDevice logical_device, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, pipeline_details_t *pipeline_details) {
+VkPipeline create_graphics_pipeline(VkDevice logical_device, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, pipeline_details_t *pipeline_details) {
+    VkPipeline graphics_pipeline;
+    
     VkGraphicsPipelineCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .stageCount = pipeline_details->stage_count,
@@ -145,8 +147,10 @@ void create_graphics_pipeline(VkPipeline *graphics_pipeline, VkDevice logical_de
         .basePipelineIndex = -1
     };
 
-    if(vkCreateGraphicsPipelines(logical_device, VK_NULL_HANDLE, 1, &create_info, NULL, graphics_pipeline) != VK_SUCCESS) {
+    if(vkCreateGraphicsPipelines(logical_device, VK_NULL_HANDLE, 1, &create_info, NULL, &graphics_pipeline) != VK_SUCCESS) {
         error(1, "Failed to create graphics pipeline\n");
     }
+
+    return graphics_pipeline;
 }
 

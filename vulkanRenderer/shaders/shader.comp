@@ -1,5 +1,5 @@
 #version 460
-#define MAX_ITER 2048
+#define MAX_ITER 512
 #define PALLETE_SIZE 3
 #define PI (3.1415926535897932384626433832795)
 #define PHI 1.618033988
@@ -14,10 +14,18 @@
 layout(local_size_x = 32, local_size_y = 32) in;
 
 layout(rgba32f, set = 0, binding = 0) uniform image2D image;
-layout(push_constant) uniform contants {
-    vec2 c;
+layout(push_constant) uniform constants {
+    float x_min;
+    float x_max;
+    float y_min;
+    float y_max;
+    float re;
+    float im;
     float t;
+    int pad;
 };
+
+vec2 c = vec2(re, im);
 
 vec3 palette[PALLETE_SIZE + 1] = {
     vec3(.95, .075, .075),
@@ -271,6 +279,7 @@ void main() {
 
     vec2 z = -vec2(aspect_ratio*(float(gl_GlobalInvocationID.x)/float(size.x) - 0.5), float(gl_GlobalInvocationID.y)/float(size.y) - 0.5);
     z *= 2.82;
+    z *= 1.1;
     //z *= 5.25;
     //z.x -= 0.5;
     //z.y += 0.00125;

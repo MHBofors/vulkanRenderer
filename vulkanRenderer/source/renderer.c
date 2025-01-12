@@ -1,5 +1,3 @@
-
-
 #include "renderer.h"
 
 #ifdef __APPLE__
@@ -36,13 +34,14 @@ void initialise_renderer(renderer_t *renderer, window_t window) {
     create_surface(&renderer->surface, renderer->instance, window);
 
     select_physical_device(&renderer->physical_device, renderer->instance, renderer->surface);
-    create_logical_device(&renderer->logical_device, renderer->physical_device, renderer->surface, &renderer->queues, device_extension_count, device_extensions);
+    create_logical_device(&renderer->logical_device, renderer->physical_device, &renderer->queues, device_extension_count, device_extensions);
 
     setup_swapchain(renderer, window);
     setup_render_pass(renderer);
     setup_framebuffers(renderer);
 
     queue_family_indices indices = find_queue_families(renderer->physical_device);
+    renderer->graphics_family = indices.graphics_family;
     create_command_pool(&renderer->command_pool, renderer->logical_device, indices.graphics_family);
 
     setup_frame_resources(renderer, frames_in_flight);
@@ -81,16 +80,15 @@ void setup_swapchain(renderer_t *renderer, window_t window) {
     renderer->extent = extent;
 
     create_swapchain(&renderer->swapchain, renderer->logical_device, renderer->physical_device, renderer->surface, min_image_count, extent);
-    
+
     vkGetSwapchainImagesKHR(renderer->logical_device, renderer->swapchain, &renderer->swapchain_image_count, NULL);
 
     renderer->swapchain_images = malloc(renderer->swapchain_image_count*sizeof(VkImage));
     renderer->swapchain_image_views = malloc(renderer->swapchain_image_count*sizeof(VkImageView));
-
     vkGetSwapchainImagesKHR(renderer->logical_device, renderer->swapchain, &renderer->swapchain_image_count, renderer->swapchain_images);
-    
+
     for(uint32_t i = 0; i < renderer->swapchain_image_count; i++) {
-        create_image_view(renderer->swapchain_image_views + i, renderer->swapchain_images[i], renderer->logical_device, 1, renderer->swapchain_image_format);
+        renderer->swapchain_image_views[i] = create_image_view(renderer->swapchain_images[i], renderer->logical_device, 1, renderer->swapchain_image_format);
     }
 }
 
@@ -108,6 +106,11 @@ void terminate_swapchain(renderer_t *renderer) {
 void recreate_swapchain(renderer_t *renderer, window_t window) {
     int width = 0, height = 0;
     get_framebuffer_size(window, &width, &height);
+    
+    while(width == 0 || height == 0) {
+        get_framebuffer_size(window, &width, &height);
+        window_wait_events();
+    }
 
     vkDeviceWaitIdle(renderer->logical_device);
 
@@ -154,8 +157,24 @@ void setup_frame_resources(renderer_t *renderer, uint32_t frame_count) {
         error(1, "Failed to allocate frames\n");
     }
 
-    for(uint32_t i = 0; i < renderer->frame_count; i++) {
-        create_frame(&renderer->frames[i], renderer->logical_device, renderer->command_pool);
+    VkSemaphoreCreateInfo semaphore_create_info = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+    };
+
+    VkFenceCreateInfo fence_create_info = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT
+    };
+
+    for(uint32_t i = 0; i < frame_count; i++) {
+        if(vkCreateSemaphore(renderer->logical_device, &semaphore_create_info, NULL, &renderer->frames[i].image_available_semaphore) != VK_SUCCESS ||
+           vkCreateSemaphore(renderer->logical_device, &semaphore_create_info, NULL, &renderer->frames[i].render_finished_semaphore) != VK_SUCCESS ||
+           vkCreateFence(renderer->logical_device, &fence_create_info, NULL, &renderer->frames[i].in_flight_fence) != VK_SUCCESS) {
+            error(1, "Failed to create frame sync resources");
+        }
+
+        create_command_pool(&renderer->frames[i].command_pool, renderer->logical_device, renderer->graphics_family);
+        create_primary_command_buffer(&renderer->frames[i].command_buffer, renderer->logical_device, renderer->command_pool, 1);
     }
 }
 
@@ -169,261 +188,117 @@ void destroy_frame_resources(renderer_t *renderer) {
 
 
 
-void setup_context(vulkan_context_t *context, window_t window) {
-    dynamic_vector *instance_extension_config = vector_alloc(sizeof(char *));
-    uint32_t window_extension_count;
-    get_window_extensions(&window_extension_count, NULL);
-
-    const char *window_extensions[window_extension_count];
-    get_window_extensions(&window_extension_count, window_extensions);
-
-    create_instance(&context->instance, window_extension_count, window_extensions);
-    vector_free(instance_extension_config);
-
-#ifndef NDEBUG
-    create_debug_messenger(context->instance, &context->debug_messenger);
-#endif
-    create_surface(&context->surface, context->instance, window);
-}
-
-void setup_device_context(device_context_t *device_context, vulkan_context_t *context) {
-    dynamic_vector *device_config = vector_alloc(sizeof(const char *));
-
-    for(uint32_t i = 0; i < device_extension_count; i++) {
-        vector_add(device_config, device_extensions + i);
-    }
-    select_physical_device(&device_context->physical_device, context->instance, context->surface);
-    create_logical_device(&device_context->logical_device, device_context->physical_device, context->surface, &device_context->queues, vector_count(device_config), vector_get_array(device_config));
-
-    vector_free(device_config);
-}
-
-void setup_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *vulkan_context, device_context_t *device_context, window_t window) {
-    VkSurfaceCapabilitiesKHR capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device_context->physical_device, vulkan_context->surface, &capabilities);
+image_t create_image(renderer_t *renderer, uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits sample_count, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties) {
+    image_t image;
     
-    VkPresentModeKHR present_mode = choose_swap_present_mode(device_context->physical_device, vulkan_context->surface);
-    VkSurfaceFormatKHR surface_format = choose_swap_surface_format(device_context->physical_device, vulkan_context->surface);
-    VkExtent2D extent = choose_swap_extent(&capabilities, window);
-    uint32_t min_image_count = capabilities.minImageCount + 1;
-
-    swap_resources->image_format = surface_format.format;
-    swap_resources->extent = extent;
-
-    create_swapchain(&swap_resources->swapchain, device_context->logical_device, device_context->physical_device, vulkan_context->surface, min_image_count, extent);
-    
-    vkGetSwapchainImagesKHR(device_context->logical_device, swap_resources->swapchain, &swap_resources->image_count, NULL);
-
-    swap_resources->images = malloc(sizeof(VkImage) * swap_resources->image_count);
-    swap_resources->image_views = malloc(sizeof(VkImageView) * swap_resources->image_count);
-    swap_resources->framebuffers = malloc(sizeof(VkFramebuffer) * swap_resources->image_count);
-
-    vkGetSwapchainImagesKHR(device_context->logical_device, swap_resources->swapchain, &swap_resources->image_count, swap_resources->images);
-    
-    for(uint32_t i = 0; i < swap_resources->image_count; i++) {
-        create_image_view(swap_resources->image_views + i, swap_resources->images[i], device_context->logical_device, 1, swap_resources->image_format);
-    }
-}
-
-void recreate_swap_resources(swap_resources_t *swap_resources, vulkan_context_t *context, device_context_t *device, render_pipeline_t *render_pipeline, window_t window) {
-    int width = 0, height = 0;
-    get_framebuffer_size(window, &width, &height);
-
-    vkDeviceWaitIdle(device->logical_device);
-
-    clean_up_swap_resources(swap_resources, device);
-
-    setup_swap_resources(swap_resources, context, device, window);
-    for(uint32_t i = 0; i < swap_resources->image_count; i++) {
-        create_framebuffer(swap_resources->framebuffers + i, device->logical_device, render_pipeline->render_pass, 1, &swap_resources->image_views[i], swap_resources->extent);
-    }
-}
-
-void setup_render_pipeline_simple(render_pipeline_t *render_pipeline, device_context_t device_context, swap_resources_t swap_resources) {
-    create_render_pass_simple(&render_pipeline->render_pass, device_context.logical_device, swap_resources.image_format);
-
-    VkPipelineLayoutCreateInfo layout_create_info = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 0,
-        .pSetLayouts = NULL,
-        .pushConstantRangeCount = 0,
-        .pPushConstantRanges = NULL
-    };
-
-    if(vkCreatePipelineLayout(device_context.logical_device, &layout_create_info, NULL, &render_pipeline->pipeline_layout) != VK_SUCCESS) {
-        error(1, "Failed to create pipeline layout\n");
-    }
-
-    VkShaderModule vertex_shader;
-    VkShaderModule fragment_shader;
-    load_shader_module(&vertex_shader, device_context.logical_device, "shaders/vert.spv");
-    load_shader_module(&fragment_shader, device_context.logical_device, "shaders/frag.spv");
-
-    uint32_t stage_count = 2;
-    VkPipelineShaderStageCreateInfo vert_shader_stage_info = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = vertex_shader,//Determines the module containing the code
-        .pName = "main",//Determines which function will invoke the shader
-        .pSpecializationInfo = NULL//Optional member specifying values for shader constants
-    };
-
-    VkPipelineShaderStageCreateInfo frag_shader_stage_info = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = fragment_shader,
-        .pName = "main",
-        .pSpecializationInfo = NULL,
-    };
-
-    VkPipelineShaderStageCreateInfo shader_modules[2] = {vert_shader_stage_info, frag_shader_stage_info};
-
-    pipeline_details_t details;
-    VkPipelineColorBlendAttachmentState blend_attachment;
-
-    clear_pipeline_details(&details);
-
-    set_input_topology(&details, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-    set_polygon_mode(&details, VK_POLYGON_MODE_FILL);
-    set_cull_mode(&details, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
-    set_multisampler_none(&details);
-    set_color_blending_none(&details, &blend_attachment);
-    set_blend_attachment_none(&blend_attachment);
-    set_depth_test_none(&details);
-
-    details.stage_count = 2;
-    details.shader_stages = shader_modules;
-
-    VkVertexInputBindingDescription binding_description = {
-        .binding = 0,
-        .stride = sizeof(vertex_t),
-        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
-    };
-
-    VkVertexInputAttributeDescription attribute_description[3];
-    attribute_description[0] = (VkVertexInputAttributeDescription){
-        .binding = 0,
-        .location = 0,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = offsetof(vertex_t, position)
-    };
-
-    attribute_description[1] = (VkVertexInputAttributeDescription){
-        .binding = 0,
-        .location = 1,
-        .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-        .offset = offsetof(vertex_t, color)
-    };
-
-    attribute_description[2] = (VkVertexInputAttributeDescription){
-        .binding = 0,
-        .location = 2,
-        .format = VK_FORMAT_R32G32_SFLOAT,
-        .offset = offsetof(vertex_t, texture_coordinates)
-    };
-
-    details.vertex_input.vertexBindingDescriptionCount = 1;
-    details.vertex_input.pVertexBindingDescriptions = &binding_description;
-    details.vertex_input.vertexAttributeDescriptionCount = 3;
-    details.vertex_input.pVertexAttributeDescriptions = attribute_description;
-
-    VkDynamicState dynamic_state[2] = {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR
-    };
-
-    details.dynamic_state.dynamicStateCount = 2;
-    details.dynamic_state.pDynamicStates = dynamic_state;
-
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = (float) swap_resources.extent.width,
-        .height = (float) swap_resources.extent.height,
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
+    VkExtent3D image_extent = {
+        .width = width,
+        .height = height,
+        .depth = 1
     };
     
-    //Specifies in which regions pixels will be stored in the framebuffer
-    VkRect2D scissor = {
-        .offset = {0, 0},
-        .extent = swap_resources.extent
+    VkImageCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .extent = image_extent,
+        .mipLevels = mip_levels,
+        .arrayLayers = 1,
+        .format = format,
+        .tiling = tiling,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .usage = usage,
+        .samples = sample_count,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
 
-    details.viewport.viewportCount = 1;
-    details.viewport.pViewports = &viewport;
-    details.viewport.scissorCount = 1;
-    details.viewport.pScissors = &scissor;
-
-    create_graphics_pipeline(&render_pipeline->graphics_pipeline, device_context.logical_device, render_pipeline->pipeline_layout, render_pipeline->render_pass, &details);
-
-    vkDestroyShaderModule(device_context.logical_device, vertex_shader, NULL);
-    vkDestroyShaderModule(device_context.logical_device, fragment_shader, NULL);
-}
-
-void clean_up_context(vulkan_context_t *context) {
-#ifndef NDEBUG
-    destroy_debug_utils_messenger_EXT(context->instance, context->debug_messenger, NULL);
-#endif
-    vkDestroySurfaceKHR(context->instance, context->surface, NULL);
-    vkDestroyInstance(context->instance, NULL);
-}
-
-void clean_up_device_context(device_context_t *device_context) {
-    vkDestroyDevice(device_context->logical_device, NULL);
-}
-
-void clean_up_swap_resources(swap_resources_t *swap_resources, device_context_t *device_context) {
-    for(uint32_t i = 0; i < swap_resources->image_count; i++) {
-        vkDestroyFramebuffer(device_context->logical_device, swap_resources->framebuffers[i], NULL);
-        vkDestroyImageView(device_context->logical_device, swap_resources->image_views[i], NULL);
+    if(vkCreateImage(renderer->logical_device, &create_info, NULL, &image.image) != VK_SUCCESS) {
+        error(1, "Failed to create image\n");
     }
 
-    vkDestroySwapchainKHR(device_context->logical_device, swap_resources->swapchain, NULL);
+    VkMemoryRequirements memory_requirements;
+    vkGetImageMemoryRequirements(renderer->logical_device, image.image, &memory_requirements);
 
-    free(swap_resources->images);
-    free(swap_resources->image_views);
-    free(swap_resources->framebuffers);
+    uint32_t memory_type = select_memory_type(renderer->physical_device, memory_requirements.memoryTypeBits, properties);
+    if(memory_type == ~0) {
+        error(1, "Failed to find suitable memory type\n");
+    }
+
+    VkMemoryAllocateInfo alloc_info = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = memory_requirements.size,
+        .memoryTypeIndex = memory_type
+    };
+
+    if(vkAllocateMemory(renderer->logical_device, &alloc_info, NULL, &image.memory) != VK_SUCCESS) {
+        error(1, "Failed to allocate image memory\n");
+    }
+
+    vkBindImageMemory(renderer->logical_device, image.image, image.memory, 0);
+    return image;
 }
 
-void clean_up_render_pipeline(render_pipeline_t *render_pipeline, device_context_t *device_context) {
-    vkDestroyPipeline(device_context->logical_device, render_pipeline->graphics_pipeline, NULL);
-    vkDestroyPipelineLayout(device_context->logical_device, render_pipeline->pipeline_layout, NULL);
-    vkDestroyRenderPass(device_context->logical_device, render_pipeline->render_pass, NULL);
+void destroy_image(image_t *allocated_image, VkDevice logical_device) {
+    vkDestroyImage(logical_device, allocated_image->image, NULL);
+    vkFreeMemory(logical_device, allocated_image->memory, NULL);
 }
 
-void create_vertex_buffer(buffer_t *vertex_buffer, dynamic_vector *vertex_vector, VkDevice logical_device, VkPhysicalDevice physical_device, VkQueue queue, VkCommandPool command_pool) {
-    VkDeviceSize buffer_size = vector_element_size(vertex_vector)*vector_count(vertex_vector);
-    buffer_t staging_buffer;
+void transition_image(VkCommandBuffer command_buffer, VkImage image, VkImageLayout source_layout, VkImageLayout destination_layout, VkPipelineStageFlags source_stage, VkPipelineStageFlags destination_stage, uint32_t mip_levels) {
 
-    create_buffer(&staging_buffer.buffer, &staging_buffer.memory, logical_device, physical_device, buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+}
+
+
+
+host_buffer_t create_host_buffer(renderer_t *renderer, VkDeviceSize device_size, VkQueue queue) {
+    VkBuffer buffer;
+    VkDeviceMemory buffer_memory;
+    void *mapped_memory;
+
+    create_buffer(&buffer, &buffer_memory, renderer->logical_device, renderer->physical_device, device_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    vkMapMemory(renderer->logical_device, buffer_memory, 0, device_size, 0, &mapped_memory);
+
+    host_buffer_t host_buffer = {
+        .buffer = buffer,
+        .memory = buffer_memory,
+        .mapped_memory = mapped_memory
+    };
+
+    return host_buffer;
+}
+
+buffer_t create_vertex_buffer(renderer_t *renderer, uint32_t vertex_count, size_t vertex_size, void *vertices, VkQueue queue, VkCommandBuffer command_buffer) {
+    VkDeviceSize buffer_size = vertex_count*vertex_size;
+    buffer_t staging_buffer, vertex_buffer;
+
+    create_buffer(&staging_buffer.buffer, &staging_buffer.memory, renderer->logical_device, renderer->physical_device, buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     
     void *data;
-    vkMapMemory(logical_device, staging_buffer.memory, 0, buffer_size, 0, &data);
-    memcpy(data, vector_get_array(vertex_vector), buffer_size);
-    vkUnmapMemory(logical_device, staging_buffer.memory);
+    vkMapMemory(renderer->logical_device, staging_buffer.memory, 0, buffer_size, 0, &data);
+    memcpy(data, vertices, buffer_size);
+    vkUnmapMemory(renderer->logical_device, staging_buffer.memory);
 
-    create_buffer(&vertex_buffer->buffer, &vertex_buffer->memory, logical_device, physical_device, buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    copy_buffer(vertex_buffer->buffer, staging_buffer.buffer, logical_device, command_pool, queue, buffer_size);
+    create_buffer(&vertex_buffer.buffer, &vertex_buffer.memory, renderer->logical_device, renderer->physical_device, buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    copy_buffer(vertex_buffer.buffer, staging_buffer.buffer, renderer->logical_device, command_buffer, queue, buffer_size);
 
-    destroy_buffer(&staging_buffer, logical_device);
+    destroy_buffer(&staging_buffer, renderer->logical_device);
+    return vertex_buffer;
 }
 
-void create_index_buffer(buffer_t *index_buffer, dynamic_vector *index_vector, VkDevice logical_device, VkPhysicalDevice physical_device, VkQueue queue, VkCommandPool command_pool) {
-    VkDeviceSize buffer_size = vector_element_size(index_vector)*vector_count(index_vector);
-    buffer_t staging_buffer;
+buffer_t create_index_buffer(renderer_t *renderer, uint32_t index_count, uint16_t indices[], VkQueue queue, VkCommandBuffer command_buffer) {
+    VkDeviceSize buffer_size = index_count*sizeof(uint16_t);
+    buffer_t staging_buffer, index_buffer;
 
-    create_buffer(&staging_buffer.buffer, &staging_buffer.memory, logical_device, physical_device, buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    create_buffer(&staging_buffer.buffer, &staging_buffer.memory, renderer->logical_device, renderer->physical_device, buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     
     void *data;
-    vkMapMemory(logical_device, staging_buffer.memory, 0, buffer_size, 0, &data);
-    memcpy(data, vector_get_array(index_vector), buffer_size);
-    vkUnmapMemory(logical_device, staging_buffer.memory);
+    vkMapMemory(renderer->logical_device, staging_buffer.memory, 0, buffer_size, 0, &data);
+    memcpy(data, indices, buffer_size);
+    vkUnmapMemory(renderer->logical_device, staging_buffer.memory);
 
-    create_buffer(&index_buffer->buffer, &index_buffer->memory, logical_device, physical_device, buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    copy_buffer(index_buffer->buffer, staging_buffer.buffer, logical_device, command_pool, queue, buffer_size);
-
-    destroy_buffer(&staging_buffer, logical_device);
+    create_buffer(&index_buffer.buffer, &index_buffer.memory, renderer->logical_device, renderer->physical_device, buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    copy_buffer(index_buffer.buffer, staging_buffer.buffer, renderer->logical_device, command_buffer, queue, buffer_size);
+    
+    destroy_buffer(&staging_buffer, renderer->logical_device);
+    return index_buffer;
 }
 
 void destroy_buffer(buffer_t *buffer, VkDevice logical_device) {
@@ -431,40 +306,16 @@ void destroy_buffer(buffer_t *buffer, VkDevice logical_device) {
     vkFreeMemory(logical_device, buffer->memory, NULL);
 }
 
-void create_frame(frame_t *frame, VkDevice logical_device, VkCommandPool command_pool) {
-    VkSemaphoreCreateInfo semaphore_create_info = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
-    };
-
-    VkFenceCreateInfo fence_create_info = {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .flags = VK_FENCE_CREATE_SIGNALED_BIT
-    };
-
-    if(vkCreateSemaphore(logical_device, &semaphore_create_info, NULL, &frame->image_available_semaphore) != VK_SUCCESS |
-       vkCreateSemaphore(logical_device, &semaphore_create_info, NULL, &frame->render_finished_semaphore) != VK_SUCCESS |
-       vkCreateFence(logical_device, &fence_create_info, NULL, &frame->in_flight_fence) != VK_SUCCESS) {
-        error(1, "Failed to create frame sync resources");
-    }
-
-    create_primary_command_buffer(&frame->command_buffer, logical_device, command_pool, 1);
+void destroy_host_buffer(host_buffer_t *buffer, VkDevice logical_device) {
+    vkDestroyBuffer(logical_device, buffer->buffer, NULL);
+    vkFreeMemory(logical_device, buffer->memory, NULL);
 }
 
-frame_t *create_frames(VkDevice logical_device, VkCommandPool command_pool, uint32_t frame_count) {
-    frame_t *frames = malloc(sizeof(frame_t) * frame_count);
-    if(frames == NULL) {
-        error(1, "Failed to allocate frames\n");
-    }
 
-    for(uint32_t i = 0; i < frame_count; i++) {
-        create_frame(frames + i, logical_device, command_pool);
-    }
-
-    return frames;
-}
 
 void clean_up_frame(frame_t *frame, VkDevice logical_device) {
     vkDestroyFence(logical_device, frame->in_flight_fence, NULL);
+    vkDestroyCommandPool(logical_device, frame->command_pool, NULL);
     vkDestroySemaphore(logical_device, frame->image_available_semaphore, NULL);
     vkDestroySemaphore(logical_device, frame->render_finished_semaphore, NULL);
 }
@@ -477,19 +328,54 @@ void clean_up_frames(frame_t *frames, uint32_t frame_count, VkDevice logical_dev
     free(frames);
 }
 
-uint32_t begin_frame(frame_t *frame, VkResult *result, VkDevice logical_device, VkSwapchainKHR swapchain) {
-    vkWaitForFences(logical_device, 1, &frame->in_flight_fence, VK_TRUE, UINT64_MAX);
+
+
+void draw_mesh(frame_t *frame, render_object_t *object, VkDescriptorSet global_descriptor) {
+    vkCmdBindPipeline(frame->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object->material_instance->material_pipeline->pipeline);
+
+    vkCmdBindDescriptorSets(frame->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object->material_instance->material_pipeline->layout, 0, 1, &global_descriptor, 0, NULL);
+    vkCmdBindDescriptorSets(frame->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object->material_instance->material_pipeline->layout, 1, 1, &object->material_instance->descriptor, 0, NULL);
+    vkCmdPushConstants(frame->command_buffer, object->material_instance->material_pipeline->layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_data_t), &object->push_constant);
+    
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(frame->command_buffer, 0, 1, object->vertex_buffer, offsets);
+    vkCmdBindIndexBuffer(frame->command_buffer, object->index_buffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdDrawIndexed(frame->command_buffer, object->index_count, 1, object->first_index, 0, 0);
+}
+
+void draw_frame(engine_t *engine, uint32_t frame_index) {
+    uint32_t image_index = begin_frame(engine, frame_index);
+
+
+    end_frame(engine, frame_index, image_index);
+}
+
+uint32_t begin_frame(engine_t *engine, uint32_t frame_index) {
+    renderer_t *renderer = &engine->renderer;
+    frame_t *frame = &renderer->frames[frame_index];
+    
+    vkWaitForFences(renderer->logical_device, 1, &frame->in_flight_fence, VK_TRUE, UINT64_MAX);
 
     uint32_t image_index;
-    *result = vkAcquireNextImageKHR(logical_device, swapchain, UINT64_MAX, frame->image_available_semaphore, VK_NULL_HANDLE, &image_index);
+    VkResult result = vkAcquireNextImageKHR(renderer->logical_device, renderer->swapchain, UINT64_MAX, frame->image_available_semaphore, VK_NULL_HANDLE, &image_index);
 
-    vkResetFences(logical_device, 1, &frame->in_flight_fence);
+    if(result == VK_ERROR_OUT_OF_DATE_KHR) {
+        recreate_swapchain(renderer, engine->window);
+    } else if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        error(1, "Failed to acquire swap chain image!");
+    }
+
+    vkResetFences(renderer->logical_device, 1, &frame->in_flight_fence);
     vkResetCommandBuffer(frame->command_buffer, 0);
-
+    begin_command_buffer(frame->command_buffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
     return image_index;
 }
 
-VkResult end_frame(frame_t *frame, VkSwapchainKHR swapchain, VkQueue graphics_queue, VkQueue present_queue, uint32_t image_index) {
+void end_frame(engine_t *engine, uint32_t frame_index, uint32_t image_index) {
+    renderer_t *renderer = &engine->renderer;
+    frame_t *frame = &renderer->frames[frame_index];
+    VkImage *image = &renderer->swapchain_images[image_index];
+
     VkSemaphore wait_semaphore[] = {frame->image_available_semaphore};
     VkSemaphore signal_semaphore[] = {frame->render_finished_semaphore};
     VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -505,11 +391,12 @@ VkResult end_frame(frame_t *frame, VkSwapchainKHR swapchain, VkQueue graphics_qu
         .pSignalSemaphores = signal_semaphore
     };
 
-    if(vkQueueSubmit(graphics_queue, 1, &submit_info, frame->in_flight_fence) != VK_SUCCESS) {
+    end_command_buffer(frame->command_buffer);
+    if(vkQueueSubmit(renderer->queues.graphics_queue, 1, &submit_info, frame->in_flight_fence) != VK_SUCCESS) {
         error(1, "Failed to submit draw command buffer");
     }
 
-    VkSwapchainKHR swapchains[] = {swapchain};
+    VkSwapchainKHR swapchains[] = {renderer->swapchain};
     
     VkPresentInfoKHR present_info = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -521,12 +408,28 @@ VkResult end_frame(frame_t *frame, VkSwapchainKHR swapchain, VkQueue graphics_qu
         .pResults = NULL
     };
 
-    return vkQueuePresentKHR(present_queue, &present_info);
-}
+    VkResult result = vkQueuePresentKHR(renderer->queues.graphics_queue, &present_info);
 
-void main_loop(window_t window) {
-    while(window_should_close(window)) {
-        glfwPollEvents();
+    if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+        recreate_swapchain(renderer, engine->window);
+    } else if(result != VK_SUCCESS) {
+        error(1, "Failed to present swap chain image");
     }
 }
+
+void main_loop(engine_t *engine) {
+    uint32_t frame_index = 0;
+    uint32_t frames_in_flight = engine->renderer.frame_count;
+
+    while(!window_should_close(engine->window)) {
+        window_update();
+
+        draw_frame(engine, frame_index);
+        frame_index = (frame_index + 1) % frames_in_flight;
+    }
+}
+
+
+
+
 

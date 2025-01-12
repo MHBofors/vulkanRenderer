@@ -20,55 +20,29 @@ uint32_t select_memory_type(VkPhysicalDevice physical_device, uint32_t type_filt
     return ~0;
 }
 
-
-
-void create_image(VkImage *image, VkDeviceMemory *image_memory, VkDevice logical_device, VkPhysicalDevice physical_device, uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits sample_count, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties) {
-    VkExtent3D image_extent = {
-        .width = width,
-        .height = height,
-        .depth = 1
+VkImageView create_image_view(VkImage image, VkDevice logical_device, uint32_t mip_levels, VkFormat image_format) {
+    VkImageView image_view;
+    VkImageSubresourceRange subresource_range = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseMipLevel = 0,
+        .levelCount = mip_levels,
+        .baseArrayLayer = 0,
+        .layerCount = 1
     };
     
-    VkImageCreateInfo create_info = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .extent = image_extent,
-        .mipLevels = mip_levels,
-        .arrayLayers = 1,
-        .format = format,
-        .tiling = tiling,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .usage = usage,
-        .samples = sample_count,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    VkImageViewCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = image_format,
+        .subresourceRange = subresource_range
     };
 
-    if(vkCreateImage(logical_device, &create_info, NULL, image) != VK_SUCCESS) {
-        error(1, "Failed to create image\n");
-    }
-
-    VkMemoryRequirements memory_requirements;
-    vkGetImageMemoryRequirements(logical_device, *image, &memory_requirements);
-
-    uint32_t memory_type = select_memory_type(physical_device, memory_requirements.memoryTypeBits, properties);
-    if(memory_type == ~0) {
-        error(1, "Failed to find suitable memory type\n");
-    }
-
-    VkMemoryAllocateInfo alloc_info = {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = memory_requirements.size,
-        .memoryTypeIndex = memory_type
-    };
-
-    if(vkAllocateMemory(logical_device, &alloc_info, NULL, image_memory) != VK_SUCCESS) {
-        error(1, "Failed to allocate image memory\n");
-    }
-
-    vkBindImageMemory(logical_device, *image, *image_memory, 0);
+    vkCreateImageView(logical_device, &create_info, NULL, &image_view);
+    return image_view;
 }
 
-void create_image_view(VkImageView *image_view, VkImage image, VkDevice logical_device, uint32_t mip_levels, VkFormat image_format) {
+void create_image_view2(VkImageView *image_view, VkImage image, VkDevice logical_device, uint32_t mip_levels, VkFormat image_format) {
     VkImageSubresourceRange subresource_range = {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .baseMipLevel = 0,
@@ -86,10 +60,7 @@ void create_image_view(VkImageView *image_view, VkImage image, VkDevice logical_
     };
 
     vkCreateImageView(logical_device, &create_info, NULL, image_view);
-}
-
-void transition_image(VkCommandBuffer command_buffer, VkImage image, VkImageLayout source_layout, VkImageLayout destination_layout, VkPipelineStageFlags source_stage, VkPipelineStageFlags destination_stage, uint32_t mip_levels) {
-
+    return;
 }
 
 
@@ -127,24 +98,8 @@ void create_buffer(VkBuffer *buffer, VkDeviceMemory *buffer_memory, VkDevice log
     vkBindBufferMemory(logical_device, *buffer, *buffer_memory, 0);
 }
 
-void copy_buffer(VkBuffer dest_buffer, VkBuffer source_buffer, VkDevice logical_device, VkCommandPool command_pool, VkQueue queue, VkDeviceSize size) {
-    VkCommandBufferAllocateInfo alloc_info = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandPool = command_pool,
-        .commandBufferCount = 1
-    };
-
-    VkCommandBuffer command_buffer;
-    vkAllocateCommandBuffers(logical_device, &alloc_info, &command_buffer);
-
-    VkCommandBufferBeginInfo begin_info = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
-    };
-
-    vkBeginCommandBuffer(command_buffer, &begin_info);
-
+void copy_buffer(VkBuffer dest_buffer, VkBuffer source_buffer, VkDevice logical_device, VkCommandBuffer command_buffer, VkQueue queue, VkDeviceSize size) {
+    begin_command_buffer(command_buffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     VkBufferCopy copy_region = {
         .dstOffset = 0,
         .srcOffset = 0,
@@ -152,6 +107,7 @@ void copy_buffer(VkBuffer dest_buffer, VkBuffer source_buffer, VkDevice logical_
     };
 
     vkCmdCopyBuffer(command_buffer, source_buffer, dest_buffer, 1, &copy_region);
+    
     vkEndCommandBuffer(command_buffer);
 
     VkSubmitInfo submit_info = {
@@ -162,8 +118,6 @@ void copy_buffer(VkBuffer dest_buffer, VkBuffer source_buffer, VkDevice logical_
 
     vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
     vkQueueWaitIdle(queue);
-
-    vkFreeCommandBuffers(logical_device, command_pool, 1, &command_buffer);
 }
 
 
@@ -216,10 +170,10 @@ void update_descriptor_set(VkDevice logical_device, VkDescriptorSet descriptor_s
     vkUpdateDescriptorSets(logical_device, num_writes, descriptor_writes, 0, NULL);
 }
 
-void create_descriptor_set_layout(VkDescriptorSetLayout *descriptor_set_layout, VkDevice logical_device, const VkDescriptorSetLayoutBinding *bindings, uint32_t num_bindings) {
+void create_descriptor_set_layout(VkDescriptorSetLayout *descriptor_set_layout, VkDevice logical_device, const VkDescriptorSetLayoutBinding *bindings, uint32_t binding_count) {
     VkDescriptorSetLayoutCreateInfo create_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = num_bindings,
+        .bindingCount = binding_count,
         .pBindings = bindings
     };
 
